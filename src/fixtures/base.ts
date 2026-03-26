@@ -16,6 +16,8 @@
 import { test as base, expect, Page } from '@playwright/test';
 import { PageGuard, RetryFromStartError } from '../helpers/pageGuard';
 
+const MAIN_PAGE = process.env.BASE_URL || 'https://flow.localzoho.com';
+
 /** Error substrings that indicate SSL / network / blank-page problems */
 const RECOVERABLE = [
   'ERR_SSL', 'ERR_CERT', 'ERR_BAD_SSL', 'NET::ERR',
@@ -67,7 +69,10 @@ export const test = base.extend<ExtraFixtures>({
     // Runs BEFORE every test attempt (including retries). If the page is already
     // showing a white/error screen from a previous run, reload once. If still
     // broken, throw RetryFromStartError so this attempt is counted as a retry.
-    const preIssue = await guard.detectIssue().catch(() => 'DETECT_FAILED');
+    // Skip entirely on a fresh page (about:blank) — nothing to check yet.
+    const currentUrl = page.url();
+    const isBlankPage = !currentUrl || currentUrl === 'about:blank';
+    const preIssue = isBlankPage ? null : await guard.detectIssue().catch(() => 'DETECT_FAILED');
     if (preIssue) {
       console.warn(`[BaseFixture] Pre-test issue "${preIssue}" — reloading before test starts…`);
       try { await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }); } catch { /* ignore */ }
@@ -98,7 +103,24 @@ export const test = base.extend<ExtraFixtures>({
       }
     });
 
-    await use(page);
+    // ── 4. Navigate to main page before every test attempt ───────────────────
+    // Ensures every test starts from a known, authenticated landing page
+    // regardless of where the browser was left after a previous run.
+    console.log(`[BaseFixture] Navigating to main page before test…`);
+    await guard.safeGoto(MAIN_PAGE);
+
+    try {
+      await use(page);
+    } finally {
+      // ── 5. Return to main page after every test (pass OR fail) ─────────────
+      // Resets the browser to a clean known state for the next test / report.
+      try {
+        await page.goto(MAIN_PAGE, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        console.log('[BaseFixture] Main page loaded after test.');
+      } catch {
+        // Non-fatal — don't mask the original test result
+      }
+    }
   },
 
   // Expose guard fixture for per-step wrapping in specs that need it

@@ -104,7 +104,9 @@ export class PageGuard {
           waitUntil: 'domcontentloaded',
           ...options,
         });
-        await this.page.waitForTimeout(800);
+        // Wait for SPA to finish rendering (Ember/React apps need networkidle)
+        await this.page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+        await this.page.waitForTimeout(500);
 
         const issue = await this.detectIssue();
         if (!issue) return; // Page loaded cleanly

@@ -21,9 +21,10 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
   });
 
   test('Create schedulerflow with slack app- send direct message action', async ({ page }) => {
-    // Allow 10 min; Playwright retries:2 restarts from Step 1 on failure.
-    // After 2 retries the trace is saved automatically for debugging.
-    test.setTimeout(600_000);
+    // Allow 2 minutes for all steps (each step waits up to 2 min).
+    // Playwright's retries:2 config will restart from Step 1 on failure,
+    // up to 2 times before saving trace for the debugging process.
+    test.setTimeout(120_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
@@ -120,78 +121,39 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
 
     // Step12: Drag and Drop the "Send Direct Message" action into "Schedule Once" Trigger
     // Drag "Send Direct Message" onto the canvas (bbox-based DragHelper)
-    // Use ARIA role "paragraph" via the accessibility tree (Ember may use <span>/<p>/<div>)
-    // We get the element info via evaluate and log ancestor tagNames for debug
-    const actionPara = page.locator('p, [role="paragraph"]').filter({ hasText: /Send Direct Message/i }).first();
+    const actionPara = page.locator('p').filter({ hasText: /Send Direct Message/i }).first();
     await actionPara.waitFor({ state: 'visible', timeout: 120_000 });
     const dragHelperInst = new DragHelper(page);
-    // Tag the <li> parent; walk up 15 levels and try both LI and UL children
+    // Tag the <li> parent; use concat (not template literal) inside evaluate
     const srcTagged = await actionPara.evaluate(function(el) {
       var node: HTMLElement | null = el as HTMLElement;
-      var tags = [];
-      for (var i = 0; i < 15; i++) {
+      for (var i = 0; i < 10; i++) {
         if (!node) break;
-        tags.push(node.tagName);
-        if (node.tagName === 'LI' || node.getAttribute('role') === 'listitem') {
+        if (node.tagName === 'LI') {
           var uid = 'dnd-' + Math.random().toString(36).slice(2, 10);
           node.setAttribute('data-dnd', uid);
           return '[data-dnd="' + uid + '"]';
         }
         node = node.parentElement;
       }
-      // fallback: tag the element itself so we at least get a bbox
-      var uid2 = 'dnd-fb-' + Math.random().toString(36).slice(2, 10);
-      el.setAttribute('data-dnd', uid2);
-      return '[data-dnd="' + uid2 + '"]';
+      return '';
     });
-    // Drop at canvas coordinates derived from the trigger node (715, 434)
+    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "Send Direct Message"');
+    // Drop at canvas coordinates derived from the trigger node bbox + 220px below
     await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
 
     // Step13: give input as test in message field
-    // First: pick the connection (Zoho Flow requires a connection before showing the message field)
-    const connDropdown = page.getByRole('textbox', { name: /choose connection/i });
-    await connDropdown.waitFor({ state: 'visible', timeout: 120_000 });
-    await connDropdown.click();
-    await page.waitForTimeout(800);
-    // Connection list appears as role=list > role=listitem (Zoho Flow custom)
-    const connListItem = page.locator('[role="list"] [role="listitem"][cursor="pointer"], .zf-input-list li').first();
-    // Use evaluate-based click on the first listitem after the connection textbox
-    await page.evaluate(() => {
-      const connInput = document.querySelector('input[placeholder="Choose Connection"], input[aria-label*="Choose Connection"]') as HTMLElement | null;
-      if (!connInput) return;
-      // Walk up to the container
-      let container = connInput.parentElement;
-      while (container && !container.querySelector('li')) container = container.parentElement;
-      const firstLi = container?.querySelector('li') as HTMLElement | null;
-      if (firstLi) firstLi.click();
-    });
-    await page.waitForTimeout(2000); // wait for action form fields to load
-    // Now fill the Message field (textarea or input with name/label containing "message")
-    const msgField = page.locator('textarea, input[aria-label*="Message" i]').first();
-    await msgField.waitFor({ state: 'visible', timeout: 120_000 });
-    await msgField.fill('test');
+    await page.getByRole('textbox').filter({ hasText: '' }).first().fill('test');
     await page.waitForTimeout(300);
 
     // Step14: Select 1st option in To Field
-    // "Choose To" textbox opens a Zoho list — click it then pick first listitem
-    const toDropdown = page.getByRole('textbox', { name: /choose to/i });
-    await toDropdown.waitFor({ state: 'visible', timeout: 120_000 });
-    await toDropdown.click();
-    await page.waitForTimeout(600);
-    await page.evaluate(() => {
-      // The To dropdown opens a sibling <list> container — click the first <listitem>
-      const toInput = document.querySelector('input[aria-label*="Choose To"], input[placeholder*="Choose To"]') as HTMLElement | null;
-      if (!toInput) return;
-      let container = toInput.parentElement;
-      while (container && !container.querySelector('li')) container = container.parentElement;
-      const firstLi = container?.querySelector('li') as HTMLElement | null;
-      if (firstLi) firstLi.click();
-    });
-    await page.waitForTimeout(500);
+    await page.locator('select, [role="combobox"], [role="listbox"]').first().click();
+    await page.locator('[role="option"]').first().click();
+    await page.waitForTimeout(300);
 
     // Step15: Click Done button
     await page.getByRole('button', { name: /done/i }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(800);
 
     // Step16: Swith ON the flow
     // Expected Result (xlsx): "flow should not be SwitchedON"
