@@ -299,10 +299,13 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     return lines;
   }
 
-  // ── Fill message field ────────────────────────────────────────────────────
+  // ── Fill message field (Slack / action panel) ─────────────────────────────
+  // Connection must be chosen first to unlock the text fields.
   if (desc.includes('message field') || (desc.includes('input') && desc.includes('test'))) {
     lines.push(
-      `    await page.getByRole('textbox').filter({ hasText: '' }).first().fill('test');`,
+      `    // Connection must be selected first — it unlocks the message/To fields`,
+      `    await flow.pickDropdownItem('Choose Connection');`,
+      `    await flow.fillActionField('text', 'test');`,
       `    await page.waitForTimeout(300);`
     );
     return lines;
@@ -311,8 +314,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   // ── Select first option in To field ──────────────────────────────────────
   if (desc.includes('to field') || desc.includes('select 1st option')) {
     lines.push(
-      `    await page.locator('select, [role="combobox"], [role="listbox"]').first().click();`,
-      `    await page.locator('[role="option"]').first().click();`,
+      `    await flow.pickDropdownItem('Choose To');`,
       `    await page.waitForTimeout(300);`
     );
     return lines;

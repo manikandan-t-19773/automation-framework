@@ -21,7 +21,9 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
   });
 
   test('Create schedulerflow with slack app- send direct message action', async ({ page }) => {
-    // 25 min total ceiling for all steps.
+    // Allow 2 minutes for all steps (each step waits up to 2 min).
+    // Playwright's retries:2 config will restart from Step 1 on failure,
+    // up to 2 times before saving trace for the debugging process.
     test.setTimeout(1_500_000);
     const flow = new FlowHelper(page);
 
@@ -139,19 +141,19 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     if (!srcTagged) throw new Error('Could not tag <li> ancestor for "Send Direct Message"');
     // Drop at canvas coordinates derived from the trigger node bbox + 220px below
     await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
-    // Wait for action config panel to open
-    await page.waitForTimeout(2000);
 
-    // Step13: Select connection then give input as "test" in message field
+    // Step13: give input as test in message field
     // Connection must be selected first — it unlocks the message/To fields
     await flow.pickDropdownItem('Choose Connection');
     await flow.fillActionField('text', 'test');
+    await page.waitForTimeout(300);
 
     // Step14: Select 1st option in To Field
     await flow.pickDropdownItem('Choose To');
+    await page.waitForTimeout(300);
 
     // Step15: Click Done button
-    await flow.clickDone();
+    await page.getByRole('button', { name: /done/i }).click();
     await page.waitForTimeout(800);
 
     // Step16: Swith ON the flow
