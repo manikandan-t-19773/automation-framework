@@ -151,7 +151,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // Flow name input is input[name="displayName"] in the Create Flow dialog`,
       `    const flowNameInput = page.locator('input[name="displayName"]').first();`,
-      `    await flowNameInput.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await flowNameInput.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await flowNameInput.fill(${JSON.stringify(flowName)});`
     );
     return lines;
@@ -162,11 +162,11 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // The Create button in Zoho Flow is an <input type="submit"> not a <button>`,
       `    const createBtn = page.locator('#createFlowButton, input[type="submit"][name="save"], input[type="submit"][value="Create"]').first();`,
-      `    await createBtn.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await createBtn.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    // Capture current URL before clicking so waitForURL detects the NEW flow's /edit route`,
       `    const preCreateUrl = page.url();`,
       `    await createBtn.click();`,
-      `    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 120_000 });`,
+      `    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });`,
       `    await page.waitForLoadState('networkidle');`,
       `    await page.waitForTimeout(2000);`
     );
@@ -177,8 +177,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc.includes('configure button') || desc.includes('click configure')) {
     lines.push(
       `    // Use exact:true to avoid matching hidden sidebar labels like 'Schedule meeting'`,
-      `    await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 120_000 });`,
-      `    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 30_000 });`,
+      `    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });`,
       `    // Schedule is 2nd Configure button: App(0), Schedule(1), Webhook(2)`,
       `    await page.locator('button:has-text("Configure")').nth(1).click();`,
       `    await page.waitForTimeout(2000);`
@@ -191,16 +191,16 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // 3 custom selects in dialog: customSelect_flows(1st), customSelect_scheduleBy/Frequency(2nd), customSelect_timeZone(3rd)`,
       `    const freqWrapper = page.locator('.customSelect_scheduleBy');`,
-      `    await freqWrapper.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await freqWrapper.locator('input.customSelectInputfield').click();`,
       `    await page.waitForTimeout(1000);`,
       `    const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();`,
       `    const onceOptFallback = page.getByText('Once', { exact: true }).first();`,
       `    try {`,
-      `      await onceOpt.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `      await onceOpt.waitFor({ state: 'visible', timeout: 30_000 });`,
       `      await onceOpt.click();`,
       `    } catch {`,
-      `      await onceOptFallback.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `      await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });`,
       `      await onceOptFallback.click();`,
       `    }`,
       `    await page.waitForTimeout(500);`
@@ -213,7 +213,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // Zoho Flow scheduler uses a textbox with aria-label "Start Date"`,
       `    const dateBox = page.getByRole('textbox', { name: /start date/i });`,
-      `    await dateBox.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await dateBox.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    // Build a date/time string 3 minutes in the future`,
       `    const fut = new Date(Date.now() + 3 * 60 * 1000);`,
       `    const p2  = (n: number) => String(n).padStart(2, '0');`,
@@ -250,7 +250,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // Zoho Flow builder sidebar search box — aria-label 'Search apps, actions, or logic'`,
       `    const searchInput = page.getByRole('textbox', { name: /search apps/i });`,
-      `    await searchInput.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await searchInput.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await searchInput.click();`,
       `    await page.waitForTimeout(500);`
     );
@@ -262,7 +262,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     const appName = desc.includes('slack') ? 'Slack' : (step.description.match(/"([^"]+)"/)?.[1] ?? 'app');
     lines.push(
       `    const appSearchBox = page.getByRole('textbox', { name: /search apps/i });`,
-      `    await appSearchBox.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await appSearchBox.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await appSearchBox.fill(${JSON.stringify(appName)});`,
       `    await page.waitForTimeout(1000);`
     );
@@ -276,7 +276,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // Drag "${actionName}" onto the canvas (bbox-based DragHelper)`,
       `    const actionPara = page.locator('p').filter({ hasText: /${actionName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}/i }).first();`,
-      `    await actionPara.waitFor({ state: 'visible', timeout: 120_000 });`,
+      `    await actionPara.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    const dragHelperInst = new DragHelper(page);`,
       `    // Tag the <li> parent; use concat (not template literal) inside evaluate`,
       `    const srcTagged = await actionPara.evaluate(function(el) {`,
@@ -328,8 +328,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
                            expLow.includes('not be switched') ||
                            expLow.includes('not switchedon');
     const toggleAssertion = expectNegative
-      ? `    await expect(flowToggle).not.toBeChecked({ timeout: 120_000 }); // Expected: "${step.expected}"`
-      : `    await expect(flowToggle).toBeChecked({ timeout: 120_000 });     // Expected: "${step.expected}"`;
+      ? `    await expect(flowToggle).not.toBeChecked({ timeout: 30_000 }); // Expected: "${step.expected}"`
+      : `    await expect(flowToggle).toBeChecked({ timeout: 30_000 });     // Expected: "${step.expected}"`;
     lines.push(
       `    // Expected Result (xlsx): "${step.expected}"`,
       `    // Attempt to toggle the flow switch`,
@@ -408,7 +408,7 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
     // Allow 2 minutes for all steps (each step waits up to 2 min).
     // Playwright's retries:2 config will restart from Step 1 on failure,
     // up to 2 times before saving trace for the debugging process.
-    test.setTimeout(120_000);
+    test.setTimeout(300_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
@@ -443,7 +443,7 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
   test('${tc.description}', async ({ page }) => {
     // Allow 2 min; retries:2 in playwright.config.ts restarts from Step 1
     // on failure. After 2 retries the trace is saved for the debugging process.
-    test.setTimeout(120_000);
+    test.setTimeout(300_000);
 ${stepLines}
   });
 });
