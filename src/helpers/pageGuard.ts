@@ -12,6 +12,20 @@
 
 import { Page } from '@playwright/test';
 
+/**
+ * Thrown when white-screen / SSL errors cannot be recovered by reloading.
+ * Playwright treats any thrown error as a test failure and — when `retries`
+ * is set in playwright.config.ts — restarts the ENTIRE test from Step 1.
+ * After `retries` attempts the test is marked failed and the trace is saved
+ * for the debugging process.
+ */
+export class RetryFromStartError extends Error {
+  constructor(reason: string) {
+    super(`[RETRY_FROM_START] ${reason}`);
+    this.name = 'RetryFromStartError';
+  }
+}
+
 /** Text patterns that identify error / blank pages */
 const ERROR_PATTERNS = [
   'ERR_SSL',
@@ -120,8 +134,9 @@ export class PageGuard {
     // Final check after all retries
     const finalIssue = await this.detectIssue();
     if (finalIssue) {
-      throw new Error(
-        `[PageGuard] Page still shows "${finalIssue}" after ${MAX_RETRIES} reload attempts for URL: ${url}`,
+      // Throw RetryFromStartError so Playwright restarts the test from Step 1
+      throw new RetryFromStartError(
+        `Page still shows "${finalIssue}" after ${MAX_RETRIES} reload attempts for URL: ${url}`,
       );
     }
   }
@@ -175,6 +190,8 @@ export class PageGuard {
         }
       }
     }
-    throw new Error(`[PageGuard] ${label} failed after 2 attempts`);
+    // All withGuard attempts exhausted — throw RetryFromStartError so
+    // Playwright restarts the test from Step 1 (up to config retries limit)
+    throw new RetryFromStartError(`${label} failed after 2 internal reload attempts`);
   }
 }

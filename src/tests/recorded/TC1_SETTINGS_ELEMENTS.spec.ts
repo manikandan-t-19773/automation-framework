@@ -16,6 +16,8 @@ test.describe('[TC1] SETTINGS_ELEMENTS', () => {
   });
 
   test('Validate the elements present in the settings menu in case of owner', async ({ page }) => {
+    // Allow 10 min; retries:2 restarts from Step 1 on any failure.
+    test.setTimeout(600_000);
     // Step 1: Click on the settings menu
     await page.getByRole('link', { name: 'Settings' }).click();
     await page.waitForLoadState('networkidle');

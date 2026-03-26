@@ -14,7 +14,7 @@
  */
 
 import { test as base, expect, Page } from '@playwright/test';
-import { PageGuard } from '../helpers/pageGuard';
+import { PageGuard, RetryFromStartError } from '../helpers/pageGuard';
 
 /** Error substrings that indicate SSL / network / blank-page problems */
 const RECOVERABLE = [
@@ -60,10 +60,27 @@ export const test = base.extend<ExtraFixtures>({
   page: async ({ page }, use) => {
     const guard = new PageGuard(page);
 
-    // 1. Patch goto
+    // ── 1. Patch goto ────────────────────────────────────────────────────────
     patchGoto(page, guard);
 
-    // 2. Listen for failed requests — log SSL/cert failures and reload once
+    // ── 2. Pre-test white-screen / SSL guard ─────────────────────────────────
+    // Runs BEFORE every test attempt (including retries). If the page is already
+    // showing a white/error screen from a previous run, reload once. If still
+    // broken, throw RetryFromStartError so this attempt is counted as a retry.
+    const preIssue = await guard.detectIssue().catch(() => 'DETECT_FAILED');
+    if (preIssue) {
+      console.warn(`[BaseFixture] Pre-test issue "${preIssue}" — reloading before test starts…`);
+      try { await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }); } catch { /* ignore */ }
+      const postReloadIssue = await guard.detectIssue().catch(() => 'DETECT_FAILED');
+      if (postReloadIssue) {
+        throw new RetryFromStartError(`Pre-test page state unrecoverable: "${postReloadIssue}"`);
+      }
+    }
+
+    // ── 3. Network-failure listener ──────────────────────────────────────────
+    // Logs SSL/certificate request failures and schedules one reload attempt.
+    // The reload gives the app a chance to recover; if the next Playwright
+    // action then times out, Playwright will retry the test from Step 1.
     let reloadScheduled = false;
     page.on('requestfailed', async (request) => {
       const failure = request.failure()?.errorText ?? '';
@@ -72,7 +89,6 @@ export const test = base.extend<ExtraFixtures>({
         console.warn(
           `[BaseFixture] Request failed with "${failure}" on ${request.url().slice(0, 80)} — scheduling reload…`,
         );
-        // Small delay so current event loop drains
         setTimeout(async () => {
           try {
             await page.reload({ waitUntil: 'domcontentloaded' });

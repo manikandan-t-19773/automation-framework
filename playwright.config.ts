@@ -7,7 +7,13 @@ export default defineConfig({
   testDir: './src/tests',
   fullyParallel: true,
   workers: 2,
-  retries: 2,  // attempt 1 normal, retry 1 for flakiness, retry 2 for SSL/white-screen
+  /** Max duration for a single test (all steps).  10 min gives room for 17
+   *  steps × 120 s each while still failing fast on a hung browser. */
+  timeout: 600_000,
+  /** Per-assertion wait: 2 minutes before a toBeVisible / not.toBeChecked
+   *  assertion gives up.  Playwright will then retry the whole test. */
+  expect: { timeout: 120_000 },
+  retries: 2,  // attempt 1 normal + 2 retries; 3rd failure triggers trace/debug
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
@@ -15,6 +21,10 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.BASE_URL || 'https://flow.localzoho.com',
+    /** 2 minutes for every individual action (click, fill, hover, …) */
+    actionTimeout: 120_000,
+    /** 2 minutes for every page.goto / page.waitForURL / waitForLoadState */
+    navigationTimeout: 120_000,
     screenshot: 'on',
     video: 'on',
     trace: 'on',
