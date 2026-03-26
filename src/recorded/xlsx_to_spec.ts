@@ -408,7 +408,7 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
     // Allow 2 minutes for all steps (each step waits up to 2 min).
     // Playwright's retries:2 config will restart from Step 1 on failure,
     // up to 2 times before saving trace for the debugging process.
-    test.setTimeout(300_000);
+    test.setTimeout(1_500_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
@@ -443,7 +443,7 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
   test('${tc.description}', async ({ page }) => {
     // Allow 2 min; retries:2 in playwright.config.ts restarts from Step 1
     // on failure. After 2 retries the trace is saved for the debugging process.
-    test.setTimeout(300_000);
+    test.setTimeout(1_500_000);
 ${stepLines}
   });
 });

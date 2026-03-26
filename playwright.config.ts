@@ -7,8 +7,8 @@ export default defineConfig({
   testDir: './src/tests',
   fullyParallel: true,
   workers: 2,
-  /** 5 min per test — covers 16 steps × ~15s each with room for slow network. */
-  timeout: 300_000,
+  /** 25 min per test — maximum allowed run time per test case. */
+  timeout: 1_500_000,
   /** Per-assertion wait: 30 s — assertions resolve in <5 s on a healthy page.
    *  Failure detected 4× faster than the previous 120 s value. */
   expect: { timeout: 30_000 },

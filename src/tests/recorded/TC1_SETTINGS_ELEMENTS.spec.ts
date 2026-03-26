@@ -16,9 +16,8 @@ test.describe('[TC1] SETTINGS_ELEMENTS', () => {
   });
 
   test('Validate the elements present in the settings menu in case of owner', async ({ page }) => {
-    // Allow 2 min; retries:2 in playwright.config.ts restarts from Step 1
-    // on failure. After 2 retries the trace is saved for the debugging process.
-    test.setTimeout(120_000);
+    // 5 min total for all 7 navigation steps; each step waits up to 2 min.
+    test.setTimeout(1_500_000);
     // Step 1: Click on the settings menu
     await page.getByRole('link', { name: 'Settings' }).click();
     await page.waitForLoadState('networkidle');

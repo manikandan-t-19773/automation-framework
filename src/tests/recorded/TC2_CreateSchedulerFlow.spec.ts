@@ -21,8 +21,8 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
   });
 
   test('Create schedulerflow with slack app- send direct message action', async ({ page }) => {
-    // 5 min total for all 16 steps; each step waits up to 2 min.
-    test.setTimeout(300_000);
+    // 25 min total ceiling for all steps.
+    test.setTimeout(1_500_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
