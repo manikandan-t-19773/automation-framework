@@ -1,0 +1,181 @@
+[
+  {
+    "id": "1",
+    "name": "SETTINGS_ELEMENTS",
+    "description": "Validate the elements present in the settings menu in case of owner",
+    "url": "",
+    "auto_status": "Automated-Casename started with Settings",
+    "steps": [
+      {
+        "step": "Step 1",
+        "description": "Click on the settings menu",
+        "expected": "Should open the settings menu on the left contain the following elements under the below categories : GENERALFLOW SETUP MONITORINGAISECURITY & COMPLIANCE",
+        "remarks": "ZF-I3127",
+        "locator": ""
+      },
+      {
+        "step": "Step 2",
+        "description": "Click on the history",
+        "expected": "Task history page should not be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step 3",
+        "description": "Click on connection",
+        "expected": "Connections page should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step 4",
+        "description": "Click on Members",
+        "expected": "Members page should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step 5",
+        "description": "Click on publish details",
+        "expected": "The publish details page should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step 6",
+        "description": "Click on Audit trail",
+        "expected": "The audit trail page should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step 7",
+        "description": "Click on Support Access",
+        "expected": "The support Access page should be displayed",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "CreateSchedulerFlow",
+    "description": "Create schedulerflow with slack app- send direct message action",
+    "url": "",
+    "auto_status": "",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"Schflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click search icon from leftside to search app name",
+        "expected": "Search input box should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "search appname as slack",
+        "expected": "able to search appname",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Drag and Drop the \"Send Direct Message\" action into \"Schedule Once\" Trigger",
+        "expected": "Able to Draganddrop and SendMessage action popup should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "give input as test in message field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Select 1st option in To Field",
+        "expected": "Able to select option in To field",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Swith ON the flow",
+        "expected": "flow should not be SwitchedON",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  }
+]

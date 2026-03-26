@@ -1,0 +1,71 @@
+{
+  "id": "TC_001",
+  "name": "Create a new Flow in Default Workspace",
+  "url": "https://flow.localzoho.com/#/workspace/default/flows",
+  "description": "Verifies that a user can open the create flow dialog, fill in the name, and cancel",
+  "tags": ["smoke", "flows"],
+  "steps": [
+    {
+      "action": "waitForLoadState",
+      "state": "networkidle",
+      "note": "Wait for the page to fully load"
+    },
+    {
+      "action": "assertURL",
+      "url": "/workspace/default/flows",
+      "note": "Should land on the flows list page"
+    },
+    {
+      "action": "assertTitle",
+      "value": "Zoho Flow",
+      "note": "Tab title must contain Zoho Flow"
+    },
+    {
+      "action": "assertVisible",
+      "role": "button",
+      "name": "Create Flow",
+      "note": "Create Flow button must be visible"
+    },
+    {
+      "action": "click",
+      "role": "button",
+      "name": "Create Flow",
+      "note": "Click the Create Flow button to open dialog"
+    },
+    {
+      "action": "waitForTimeout",
+      "timeout": 1000
+    },
+    {
+      "action": "assertVisible",
+      "role": "textbox",
+      "name": "Flow Name",
+      "note": "Flow name input should appear in dialog"
+    },
+    {
+      "action": "fill",
+      "role": "textbox",
+      "name": "Flow Name",
+      "value": "My Automated Test Flow",
+      "note": "Type the flow name"
+    },
+    {
+      "action": "assertValue",
+      "role": "textbox",
+      "name": "Flow Name",
+      "value": "My Automated Test Flow",
+      "note": "Input must contain the typed value"
+    },
+    {
+      "action": "click",
+      "role": "button",
+      "name": "Cancel",
+      "note": "Cancel to avoid creating a real flow"
+    },
+    {
+      "action": "assertURL",
+      "url": "/workspace/default/flows",
+      "note": "Should still be on flows page after cancel"
+    }
+  ]
+}

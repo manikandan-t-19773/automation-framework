@@ -1,0 +1,207 @@
+import { test, expect } from '../../fixtures/base';
+import { FlowHelper } from '../../helpers/flowHelper';
+import { DragHelper } from '../../helpers/dragHelper';
+
+test.use({ storageState: 'playwright/.auth/user.json' });
+
+/**
+ * TC2: CreateSchedulerFlow
+ * Create schedulerflow with slack app- send direct message action
+ * Source: manualtestcasedoc/Settings_standalone.xlsx
+ */
+test.describe('[TC2] CreateSchedulerFlow', () => {
+  let flowName = '';
+
+  test.afterEach(async ({ page }) => {
+    // Delete the test flow after each run to keep the workspace clean
+    if (flowName) {
+      const flow = new FlowHelper(page);
+      await flow.deleteFlow(flowName);
+    }
+  });
+
+  test('Create schedulerflow with slack app- send direct message action', async ({ page }) => {
+    const flow = new FlowHelper(page);
+
+    // Navigate to the start URL before running steps
+    await page.goto("https://flow.localzoho.com/#/workspace/default/flows");
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+
+    // Step1: Click My Flows Tab
+    await page.getByRole('link', { name: /my flows/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(800);
+    await expect(page).toHaveURL(new RegExp("/workspace/default/flows"));
+
+    // Step2: Click Create Flow button in MyFlows Tab
+    await page.getByRole('button', { name: /create flow/i }).click();
+    await page.waitForTimeout(800);
+
+    // Step3: Provide FlowName as "Schflow" in Flow Name field
+    // Flow name input is input[name="displayName"] in the Create Flow dialog
+    const flowNameInput = page.locator('input[name="displayName"]').first();
+    await flowNameInput.waitFor({ state: 'visible', timeout: 8000 });
+    await flowNameInput.fill("Schflow");
+
+    // Step4: Click Create Button
+    // The Create button in Zoho Flow is an <input type="submit"> not a <button>
+    const createBtn = page.locator('#createFlowButton, input[type="submit"][name="save"], input[type="submit"][value="Create"]').first();
+    await createBtn.waitFor({ state: 'visible', timeout: 10000 });
+    // Capture current URL before clicking so waitForURL detects the NEW flow's /edit route
+    const preCreateUrl = page.url();
+    await createBtn.click();
+    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Step5: Click Configure button in Schedule section
+    // Use exact:true to avoid matching hidden sidebar labels like 'Schedule meeting'
+    await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 20000 });
+    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 10000 });
+    // Schedule is 2nd Configure button: App(0), Schedule(1), Webhook(2)
+    await page.locator('button:has-text("Configure")').nth(1).click();
+    await page.waitForTimeout(2000);
+
+    // Step6: Click Frequency field and set Once
+    // 3 custom selects in dialog: customSelect_flows(1st), customSelect_scheduleBy/Frequency(2nd), customSelect_timeZone(3rd)
+    const freqWrapper = page.locator('.customSelect_scheduleBy');
+    await freqWrapper.waitFor({ state: 'visible', timeout: 15000 });
+    await freqWrapper.locator('input.customSelectInputfield').click();
+    await page.waitForTimeout(1000);
+    const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();
+    const onceOptFallback = page.getByText('Once', { exact: true }).first();
+    try {
+      await onceOpt.waitFor({ state: 'visible', timeout: 5000 });
+      await onceOpt.click();
+    } catch {
+      await onceOptFallback.waitFor({ state: 'visible', timeout: 8000 });
+      await onceOptFallback.click();
+    }
+    await page.waitForTimeout(500);
+
+    // Step7: Click DateField and set 3Minutes later
+    // Zoho Flow scheduler uses a textbox with aria-label "Start Date"
+    const dateBox = page.getByRole('textbox', { name: /start date/i });
+    await dateBox.waitFor({ state: 'visible', timeout: 15000 });
+    // Build a date/time string 3 minutes in the future
+    const fut = new Date(Date.now() + 3 * 60 * 1000);
+    const p2  = (n: number) => String(n).padStart(2, '0');
+    // Zoho Flow date picker accepts "MM/DD/YYYY HH:MM" style input
+    const dateStr = `${p2(fut.getMonth()+1)}/${p2(fut.getDate())}/${fut.getFullYear()} ${p2(fut.getHours())}:${p2(fut.getMinutes())}`;
+    await dateBox.click();
+    await dateBox.fill(dateStr);
+    await page.keyboard.press('Tab'); // confirm the date picker
+    await page.waitForTimeout(800);
+
+    // Step8: Click Apply button
+    await page.getByRole('button', { name: /apply/i }).click();
+    await page.waitForTimeout(500);
+
+    // Step9: Click Done button
+    await page.getByRole('button', { name: /done/i }).click();
+    await page.waitForTimeout(800);
+
+    // Step10: Click search icon from leftside to search app name
+    // Zoho Flow builder sidebar search box — aria-label 'Search apps, actions, or logic'
+    const searchInput = page.getByRole('textbox', { name: /search apps/i });
+    await searchInput.waitFor({ state: 'visible', timeout: 15000 });
+    await searchInput.click();
+    await page.waitForTimeout(500);
+
+    // Step11: search appname as slack
+    const appSearchBox = page.getByRole('textbox', { name: /search apps/i });
+    await appSearchBox.waitFor({ state: 'visible', timeout: 8000 });
+    await appSearchBox.fill("Slack");
+    await page.waitForTimeout(1000);
+
+    // Step12: Drag and Drop the "Send Direct Message" action into "Schedule Once" Trigger
+    // Drag "Send Direct Message" onto the canvas (bbox-based DragHelper)
+    // Use ARIA role "paragraph" via the accessibility tree (Ember may use <span>/<p>/<div>)
+    // We get the element info via evaluate and log ancestor tagNames for debug
+    const actionPara = page.locator('p, [role="paragraph"]').filter({ hasText: /Send Direct Message/i }).first();
+    await actionPara.waitFor({ state: 'visible', timeout: 20000 });
+    const dragHelperInst = new DragHelper(page);
+    // Tag the <li> parent; walk up 15 levels and try both LI and UL children
+    const srcTagged = await actionPara.evaluate(function(el) {
+      var node = el;
+      var tags = [];
+      for (var i = 0; i < 15; i++) {
+        if (!node) break;
+        tags.push(node.tagName);
+        if (node.tagName === 'LI' || node.getAttribute('role') === 'listitem') {
+          var uid = 'dnd-' + Math.random().toString(36).slice(2, 10);
+          node.setAttribute('data-dnd', uid);
+          return '[data-dnd="' + uid + '"]';
+        }
+        node = node.parentElement;
+      }
+      // fallback: tag the element itself so we at least get a bbox
+      var uid2 = 'dnd-fb-' + Math.random().toString(36).slice(2, 10);
+      el.setAttribute('data-dnd', uid2);
+      return '[data-dnd="' + uid2 + '"]';
+    });
+    // Drop at canvas coordinates derived from the trigger node (715, 434)
+    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
+
+    // Step13: give input as test in message field
+    // First: pick the connection (Zoho Flow requires a connection before showing the message field)
+    const connDropdown = page.getByRole('textbox', { name: /choose connection/i });
+    await connDropdown.waitFor({ state: 'visible', timeout: 30000 });
+    await connDropdown.click();
+    await page.waitForTimeout(800);
+    // Connection list appears as role=list > role=listitem (Zoho Flow custom)
+    const connListItem = page.locator('[role="list"] [role="listitem"][cursor="pointer"], .zf-input-list li').first();
+    // Use evaluate-based click on the first listitem after the connection textbox
+    await page.evaluate(() => {
+      const connInput = document.querySelector('input[placeholder="Choose Connection"], input[aria-label*="Choose Connection"]') as HTMLElement | null;
+      if (!connInput) return;
+      // Walk up to the container
+      let container = connInput.parentElement;
+      while (container && !container.querySelector('li')) container = container.parentElement;
+      const firstLi = container?.querySelector('li') as HTMLElement | null;
+      if (firstLi) firstLi.click();
+    });
+    await page.waitForTimeout(2000); // wait for action form fields to load
+    // Now fill the Message field (textarea or input with name/label containing "message")
+    const msgField = page.locator('textarea, input[aria-label*="Message" i]').first();
+    await msgField.waitFor({ state: 'visible', timeout: 15000 });
+    await msgField.fill('test');
+    await page.waitForTimeout(300);
+
+    // Step14: Select 1st option in To Field
+    // "Choose To" textbox opens a Zoho list — click it then pick first listitem
+    const toDropdown = page.getByRole('textbox', { name: /choose to/i });
+    await toDropdown.waitFor({ state: 'visible', timeout: 15000 });
+    await toDropdown.click();
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+      // The To dropdown opens a sibling <list> container — click the first <listitem>
+      const toInput = document.querySelector('input[aria-label*="Choose To"], input[placeholder*="Choose To"]') as HTMLElement | null;
+      if (!toInput) return;
+      let container = toInput.parentElement;
+      while (container && !container.querySelector('li')) container = container.parentElement;
+      const firstLi = container?.querySelector('li') as HTMLElement | null;
+      if (firstLi) firstLi.click();
+    });
+    await page.waitForTimeout(500);
+
+    // Step15: Click Done button
+    await page.getByRole('button', { name: /done/i }).click();
+    await page.waitForTimeout(1500);
+
+    // Step16: Swith ON the flow
+    // Expected Result (xlsx): "flow should not be SwitchedON"
+    // Attempt to toggle the flow switch
+    await page.evaluate(() => {
+      const input = document.querySelector('input[name="switch"], input.switch-input') as HTMLElement | null;
+      if (!input) throw new Error('Switch input not found');
+      let el: HTMLElement | null = input.parentElement;
+      while (el && window.getComputedStyle(el).cursor !== 'pointer') el = el.parentElement;
+      (el ?? input).click();
+    });
+    await page.waitForTimeout(1500);
+    const flowToggle = page.locator('input[name="switch"], input.switch-input').first();
+    await expect(flowToggle).not.toBeChecked({ timeout: 5000 }); // Expected: "flow should not be SwitchedON"
+  });
+});

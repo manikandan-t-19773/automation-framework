@@ -1,0 +1,5 @@
+rm src/tests/generated/flow_localzoho_com.spec.ts
+npm run generate
+npm test
+
+

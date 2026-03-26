@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Recorded Test Case",
+  "type": "object",
+  "required": ["id", "name", "url", "steps"],
+  "properties": {
+    "id":          { "type": "string", "description": "Unique test id, e.g. TC_001" },
+    "name":        { "type": "string", "description": "Test case name shown in report" },
+    "url":         { "type": "string", "description": "Starting URL for this test" },
+    "description": { "type": "string", "description": "Optional human description" },
+    "tags":        { "type": "array", "items": { "type": "string" }, "description": "e.g. [smoke, regression]" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "navigate", "click", "fill", "select", "check", "uncheck",
+              "hover", "press", "clear", "upload",
+              "assertVisible", "assertHidden", "assertText", "assertValue",
+              "assertURL", "assertTitle", "assertCount", "assertEnabled", "assertDisabled",
+              "waitForURL", "waitForSelector", "waitForTimeout", "waitForLoadState",
+              "screenshot", "scrollTo",
+              "dragAndDrop"
+            ]
+          },
+          "selector":  { "type": "string",  "description": "CSS selector, e.g. #ember123, .btn-primary" },
+          "role":      { "type": "string",  "description": "ARIA role, e.g. button, link, textbox" },
+          "name":      { "type": "string",  "description": "Accessible name for getByRole / getByText" },
+          "text":      { "type": "string",  "description": "Visible text for getByText" },
+          "label":     { "type": "string",  "description": "Label text for getByLabel" },
+          "placeholder":{ "type": "string", "description": "Placeholder for getByPlaceholder" },
+          "testId":    { "type": "string",  "description": "data-testid value" },
+          "value":     { "type": "string",  "description": "Value to fill / select / assert" },
+          "key":       { "type": "string",  "description": "Key to press, e.g. Enter, Tab, Escape" },
+          "url":       { "type": "string",  "description": "URL pattern for navigate / assertURL / waitForURL" },
+          "timeout":   { "type": "number",  "description": "Timeout in ms for waits" },
+          "state":     { "type": "string",  "enum": ["load","domcontentloaded","networkidle"], "description": "For waitForLoadState" },
+          "path":      { "type": "string",  "description": "File path for upload or screenshot" },
+          "note":      { "type": "string",  "description": "Human-readable comment for this step" },
+          "source":    { "type": "string",  "description": "CSS selector for the draggable element (dragAndDrop action)" },
+          "target":    { "type": "string",  "description": "CSS selector for the drop target (dragAndDrop action)" },
+          "dropPosition": {
+            "type": "object",
+            "description": "Optional pixel offset from the target's top-left corner (dragAndDrop action)",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          },
+          "waitTime":  { "type": "number",  "description": "ms to hold the drag before releasing (dragAndDrop, default 3000)" }
+        }
+      }
+    }
+  }
+}
