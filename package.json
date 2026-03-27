@@ -6,6 +6,7 @@
   "scripts": {
     "generate": "ts-node src/ai-generator/run.ts",
     "generate:from-xlsx": "ts-node src/recorded/xlsx_to_spec.ts",
+    "generate:logic-containers": "ts-node src/recorded/logic_containers_to_spec.ts",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "report": "playwright show-report",

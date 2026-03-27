@@ -1,0 +1,631 @@
+[
+  {
+    "id": "1",
+    "name": "LOGIC_ELEMENTS",
+    "description": "Validate the logic container elements",
+    "url": "",
+    "auto_status": "Automated-CRUD10-CREATEandEXECUTEFLOW_AllLOGIC_Execution",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"sendmailflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click Build-ins Subtab",
+        "expected": "Build-ins subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "Click Logic Subtab",
+        "expected": "Logic subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Verify \"SetVariable\" Present",
+        "expected": "\"SetVariable\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "Verify \"Decision\" Present",
+        "expected": "\"Decision\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Verify \"Delay\" Present",
+        "expected": "\"Delay\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Verify \"If else\" Present",
+        "expected": "\"If else\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Click \"Subflow\" Subtab",
+        "expected": "\"Subflow\" subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step17",
+        "description": "Verify \"Call a subflow\" Present",
+        "expected": "\"Call a subflow\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step18",
+        "description": "Click \"Webhooks\" Subtab",
+        "expected": "\"Webhooks\" subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step19",
+        "description": "Verify \"Send Webhook\" Present",
+        "expected": "\"Send Webhook\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step20",
+        "description": "Click \"Notification\" Subtab",
+        "expected": "\"Notification\" subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step21",
+        "description": "Verify \"Send Email\" Present",
+        "expected": "\"Send Email\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step22",
+        "description": "Click \"Custom Function\" Subtab",
+        "expected": "\"Custom Function\" subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step23",
+        "description": "Verify any 1 of custom function record available",
+        "expected": "atleast 1 custom function should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step24",
+        "description": "Click \"Commands & Scripts\" Subtab",
+        "expected": "\"Commands & Scripts\" subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step25",
+        "description": "Verify \"Execute Base script\" Present",
+        "expected": "\"Execute Base script\" should be displayed",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "SET_VARIABLE_CONTAINER",
+    "description": "Validate the set variable container is working",
+    "url": "",
+    "auto_status": "Automated-CRUD10-CREATEandEXECUTEFLOW_AllLOGIC_Execution",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"sendmailflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click Build-ins Subtab",
+        "expected": "Build-ins subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "Click Logic Subtab",
+        "expected": "Logic subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Drag \"Set Variable\" into Trigger box",
+        "expected": "Drag and drop should be worked and \"Set ariable\" window opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "Give any input in \"Value\" field",
+        "expected": "We can able to give input in Value field",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Click Notification Section",
+        "expected": "Notification section should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Drag and Drop the \"Send Mail\" action into Trigger box",
+        "expected": "Send Mail action should be drag and dropped and SendMail popup should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step17",
+        "description": "Give input as tmaniflow@gmail.com in \"To\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step18",
+        "description": "Give input as Automation in \"Subject\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step19",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step20",
+        "description": "Swith ON the flow",
+        "expected": "flow should be SwitchedON",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step21",
+        "description": "Click History Subtab",
+        "expected": "History subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step22",
+        "description": "Wait until set the trigger scheduler Time",
+        "expected": "We can wait",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step23",
+        "description": "Click Refresh icon in history Tab",
+        "expected": "we can able to click refresh icon",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step24",
+        "description": "Click latest execution Record",
+        "expected": "We can able to click execution record",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step25",
+        "description": "Click Setvariable Input",
+        "expected": "Given input value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step26",
+        "description": "Click Setvariable output",
+        "expected": "Given output value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step27",
+        "description": "Click close window icon",
+        "expected": "We can able to click close window icon",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "DECISION_CONTAINER",
+    "description": "Validate the  condition in the decision container are working",
+    "url": "",
+    "auto_status": "Automated-CRUD10-CREATEandEXECUTEFLOW_AllLOGIC_Execution",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"sendmailflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click Build-ins Subtab",
+        "expected": "Build-ins subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "Click Logic Subtab",
+        "expected": "Logic subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Drag \"Set Variable\" into Trigger box",
+        "expected": "Drag and drop should be worked and \"Set ariable\" window opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "Give \"qatest\" input in \"Value\" field",
+        "expected": "We can able to give input in Value field",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Drag and Drop the \"Decision\" box into SetVariable action",
+        "expected": "Decision box should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Click 1st Choose option",
+        "expected": "Set Variiable option should be present",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step17",
+        "description": "Select \"Set Variable\" option",
+        "expected": "We can able to choose set variable option",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step18",
+        "description": "Click 2nd Choose Option",
+        "expected": "starts with, ends with, contains, does not contain, options should be present",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step19",
+        "description": "Select starts with",
+        "expected": "We can able to choose starts with option",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step20",
+        "description": "Give as \"qa\" value in input field",
+        "expected": "We can able to give input in Value field",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step21",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step22",
+        "description": "Click Notification Section",
+        "expected": "Notification section should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step23",
+        "description": "Drag and Drop the \"Send Mail\" action into the \"Decision\" action Direct connection",
+        "expected": "Send Mail action should be drag and dropped and SendMail popup should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step24",
+        "description": "Give input as tmaniflow@gmail.com in \"To\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step25",
+        "description": "Give input as Automation in \"Subject\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step26",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step27",
+        "description": "Swith ON the flow",
+        "expected": "flow should be SwitchedON",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step28",
+        "description": "Click History Subtab",
+        "expected": "History subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step29",
+        "description": "Wait until set the trigger scheduler Time",
+        "expected": "We can wait",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step30",
+        "description": "Click Refresh icon in history Tab",
+        "expected": "we can able to click refresh icon",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step31",
+        "description": "Click latest execution Record",
+        "expected": "We can able to click execution record",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step32",
+        "description": "Click Setvariable Input",
+        "expected": "Given input value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step33",
+        "description": "Click Setvariable output",
+        "expected": "Given output value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step34",
+        "description": "Click close window icon",
+        "expected": "We can able to click close window icon",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  }
+]
