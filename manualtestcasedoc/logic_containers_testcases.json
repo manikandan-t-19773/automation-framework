@@ -71,8 +71,8 @@
       },
       {
         "step": "Step10",
-        "description": "Click Build-ins Subtab",
-        "expected": "Build-ins subtab should be clicked",
+        "description": "Click Built-ins Subtab",
+        "expected": "Built-ins subtab should be clicked",
         "remarks": "",
         "locator": ""
       },
@@ -255,8 +255,8 @@
       },
       {
         "step": "Step10",
-        "description": "Click Build-ins Subtab",
-        "expected": "Build-ins subtab should be clicked",
+        "description": "Click Built-ins Subtab",
+        "expected": "Built-ins subtab should be clicked",
         "remarks": "",
         "locator": ""
       },
@@ -453,8 +453,8 @@
       },
       {
         "step": "Step10",
-        "description": "Click Build-ins Subtab",
-        "expected": "Build-ins subtab should be clicked",
+        "description": "Click Built-ins Subtab",
+        "expected": "Built-ins subtab should be clicked",
         "remarks": "",
         "locator": ""
       },

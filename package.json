@@ -11,7 +11,32 @@
     "test:headed": "playwright test --headed",
     "report": "playwright show-report",
     "record": "ts-node src/recorded/runner.ts",
-    "record:codegen": "playwright codegen --save-storage=playwright/.auth/user.json https://flow.localzoho.com"
+    "record:codegen": "playwright codegen --save-storage=playwright/.auth/user.json https://flow.localzoho.com",
+
+    "_comment_ai": "--- AI AUTO-PILOT: reads JSON steps, performs all actions automatically, writes spec ---",
+    "record:auto:lc1": "ts-node src/recorded/auto_recorder.ts LC1",
+    "record:auto:lc2": "ts-node src/recorded/auto_recorder.ts LC2",
+    "record:auto:lc3": "ts-node src/recorded/auto_recorder.ts LC3",
+    "record:auto:lc":  "ts-node src/recorded/auto_recorder.ts LC",
+    "record:auto:s2":  "ts-node src/recorded/auto_recorder.ts S2",
+    "record:auto:s3":  "ts-node src/recorded/auto_recorder.ts S3",
+    "record:auto:all": "ts-node src/recorded/auto_recorder.ts all",
+
+    "_comment_record": "--- RECORD: run one of these, perform steps in browser, close → spec saved ---",
+    "record:settings1": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/TC1_SETTINGS_ELEMENTS.spec.ts https://flow.localzoho.com/#/workspace/default/settings",
+    "record:settings2": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/TC2_CreateSchedulerFlow.spec.ts https://flow.localzoho.com/#/workspace/default/flows",
+    "record:settings3": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/TC3_CreateFlowSendMail.spec.ts https://flow.localzoho.com/#/workspace/default/flows",
+    "record:lc1": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/LogicContainers/TC1_LOGIC_ELEMENTS.spec.ts https://flow.localzoho.com/#/workspace/default/flows",
+    "record:lc2": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/LogicContainers/TC2_SET_VARIABLE_CONTAINER.spec.ts https://flow.localzoho.com/#/workspace/default/flows",
+    "record:lc3": "playwright codegen --channel chrome --load-storage playwright/.auth/user.json --ignore-https-errors -o src/tests/recorded/LogicContainers/TC3_DECISION_CONTAINER.spec.ts https://flow.localzoho.com/#/workspace/default/flows",
+
+    "_comment_test": "--- TEST: run individual TCs ---",
+    "test:lc": "playwright test src/tests/recorded/LogicContainers/ --project=chromium --workers=1",
+    "test:lc1": "playwright test src/tests/recorded/LogicContainers/TC1_LOGIC_ELEMENTS.spec.ts --project=chromium --workers=1",
+    "test:lc2": "playwright test src/tests/recorded/LogicContainers/TC2_SET_VARIABLE_CONTAINER.spec.ts --project=chromium --workers=1",
+    "test:lc3": "playwright test src/tests/recorded/LogicContainers/TC3_DECISION_CONTAINER.spec.ts --project=chromium --workers=1",
+    "test:settings": "playwright test src/tests/recorded/TC1_SETTINGS_ELEMENTS.spec.ts src/tests/recorded/TC2_CreateSchedulerFlow.spec.ts src/tests/recorded/TC3_CreateFlowSendMail.spec.ts --project=chromium --workers=1",
+    "test:all": "playwright test src/tests/recorded/ --project=chromium --workers=1"
   },
   "keywords": [],
   "author": "",

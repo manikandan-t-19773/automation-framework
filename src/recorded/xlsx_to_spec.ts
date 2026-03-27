@@ -319,46 +319,13 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     return lines;
   }
 
-  // ── Drag and Drop — uses DragHelper (src/helpers/dragHelper.ts) ──────────
+  // ── Drag and Drop — uses dragModule helper ────────────────────────────────
   if (desc.includes('drag and drop') || desc.includes('draganddrop')) {
     const actionMatch = step.description.match(/"([^"]+)"/g);
     const actionName  = actionMatch?.[0]?.replace(/"/g, '') ?? 'Send Direct Message';
-    const safeRe      = actionName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     lines.push(
-      `    // Drag "${actionName}" onto the canvas (bbox-based DragHelper)`,
-      `    // Try p, span, and li tags — Built-ins may use a different DOM structure`,
-      `    const actionPara = page.locator('p, span, li').filter({ hasText: /${safeRe}/i }).first();`,
-      `    // Fallback: if action not visible from sidebar navigation, search for it directly`,
-      `    try {`,
-      `      await actionPara.waitFor({ state: 'visible', timeout: 10_000 });`,
-      `    } catch {`,
-      `      const appSrch = page.getByRole('textbox', { name: /search apps/i });`,
-      `      if (await appSrch.isVisible()) {`,
-      `        await appSrch.fill(${JSON.stringify(actionName)});`,
-      `        await page.waitForTimeout(200);`,
-      `      }`,
-      `      await actionPara.waitFor({ state: 'visible', timeout: 20_000 });`,
-      `    }`,
-      `    const dragHelperInst = new DragHelper(page);`,
-      `    // Tag the <li> parent; use concat (not template literal) inside evaluate`,
-      `    const srcTagged = await actionPara.evaluate(function(el) {`,
-      `      var node: HTMLElement | null = el as HTMLElement;`,
-      `      for (var i = 0; i < 10; i++) {`,
-      `        if (!node) break;`,
-      `        if (node.tagName === 'LI') {`,
-      `          var uid = 'dnd-' + Math.random().toString(36).slice(2, 10);`,
-      `          node.setAttribute('data-dnd', uid);`,
-      `          return '[data-dnd="' + uid + '"]';`,
-      `        }`,
-      `        node = node.parentElement;`,
-      `      }`,
-      `      return '';`,
-      `    });`,
-      `    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "${actionName}"');`,
-      `    // Drop at canvas coordinates derived from the trigger node bbox + 220px below`,
-      `    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });`,
-      `    // Give the action config panel 2 s to render after the drop`,
-      `    await page.waitForTimeout(400);`
+      `    // dragModule: proven selector p.zf-module-label:text-is("${actionName}")`,
+      `    await dragModule(page, '${actionName}', { x: 715, y: 434 });`
     );
     return lines;
   }
@@ -449,10 +416,10 @@ function generateSpec(tc: ManualTC): string {
     .join('\n\n');
 
   if (isFlow) {
-    // ── Flow-creation TC: uses FlowHelper + DragHelper + afterEach teardown ──
+    // ── Flow-creation TC: uses FlowHelper + dragModule + afterEach teardown ──
     return `import { test, expect } from '../../fixtures/base';
 import { FlowHelper } from '../../helpers/flowHelper';
-import { DragHelper } from '../../helpers/dragHelper';
+import { dragModule } from '../../helpers/dragHelper';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

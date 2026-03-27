@@ -1,6 +1,6 @@
 import { test, expect } from '../../../fixtures/base';
 import { FlowHelper } from '../../../helpers/flowHelper';
-import { DragHelper } from '../../../helpers/dragHelper';
+import { dragModule } from '../../../helpers/dragHelper';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -102,7 +102,7 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.getByRole('button', { name: /^done$/i }).click();
     await page.waitForTimeout(200);
 
-    // Step10: Click Build-ins Subtab
+    // Step10: Click Built-ins Subtab
     // Real locator: span[data-ember-action] with text "Built-ins"
     // Only visible after the canvas / sidebar has loaded
     const builtinsBtn = page.locator('span[data-ember-action]').filter({ hasText: /^Built-ins$/i });
@@ -119,17 +119,8 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.waitForTimeout(200);
 
     // Step12: Drag "Set Variable" into Trigger box
-    // Drag "Set Variable" — real DOM: p.zf-module-label (unique, avoids service-li strict-mode)
-    {
-      const dragHelper = new DragHelper(page);
-      await dragHelper.dragAndDrop(
-        'p.zf-module-label:text-is("Set Variable")',
-        '',
-        { x: 715, y: 434 }
-      );
-      console.log('Dragged Set Variable to canvas (715, 434)');
-      await page.waitForTimeout(400);
-    }
+    // dragModule: proven selector p.zf-module-label:text-is("Set Variable")
+    await dragModule(page, 'Set Variable', { x: 715, y: 434 });
 
     // Step13: Give any input in "Value" field
     // Value field — real DOM selector confirmed: input[name="variableValue"]
@@ -147,17 +138,8 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.waitForTimeout(200);
 
     // Step16: Drag and Drop the "Send Mail" action into Trigger box
-    // Drag "Send Mail" — real DOM: p.zf-module-label
-    {
-      const dragHelper = new DragHelper(page);
-      await dragHelper.dragAndDrop(
-        'p.zf-module-label:text-is("Send Mail")',
-        '',
-        { x: 715, y: 580 }
-      );
-      console.log('Dragged Send Mail to canvas (715, 580)');
-      await page.waitForTimeout(400);
-    }
+    // dragModule: Send Mail below Set Variable
+    await dragModule(page, 'Send Mail', { x: 715, y: 580 });
 
     // Step17: Give input as tmaniflow@gmail.com in "To" field
     // Fill To field

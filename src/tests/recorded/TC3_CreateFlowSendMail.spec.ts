@@ -1,6 +1,6 @@
 import { test, expect } from '../../fixtures/base';
 import { FlowHelper } from '../../helpers/flowHelper';
-import { DragHelper } from '../../helpers/dragHelper';
+import { dragModule } from '../../helpers/dragHelper';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -123,40 +123,8 @@ test.describe('[TC3] CreateFlowSendMail', () => {
     await page.waitForTimeout(200);
 
     // Step12: Drag and Drop the "Send Mail" action into Trigger box
-    // Drag "Send Mail" onto the canvas (bbox-based DragHelper)
-    // Try p, span, and li tags — Built-ins may use a different DOM structure
-    const actionPara = page.locator('p, span, li').filter({ hasText: /Send Mail/i }).first();
-    // Fallback: if action not visible from sidebar navigation, search for it directly
-    try {
-      await actionPara.waitFor({ state: 'visible', timeout: 10_000 });
-    } catch {
-      const appSrch = page.getByRole('textbox', { name: /search apps/i });
-      if (await appSrch.isVisible()) {
-        await appSrch.fill("Send Mail");
-        await page.waitForTimeout(200);
-      }
-      await actionPara.waitFor({ state: 'visible', timeout: 20_000 });
-    }
-    const dragHelperInst = new DragHelper(page);
-    // Tag the <li> parent; use concat (not template literal) inside evaluate
-    const srcTagged = await actionPara.evaluate(function(el) {
-      var node: HTMLElement | null = el as HTMLElement;
-      for (var i = 0; i < 10; i++) {
-        if (!node) break;
-        if (node.tagName === 'LI') {
-          var uid = 'dnd-' + Math.random().toString(36).slice(2, 10);
-          node.setAttribute('data-dnd', uid);
-          return '[data-dnd="' + uid + '"]';
-        }
-        node = node.parentElement;
-      }
-      return '';
-    });
-    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "Send Mail"');
-    // Drop at canvas coordinates derived from the trigger node bbox + 220px below
-    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
-    // Give the action config panel 2 s to render after the drop
-    await page.waitForTimeout(400);
+    // dragModule: proven selector p.zf-module-label:text-is("Send Mail")
+    await dragModule(page, 'Send Mail', { x: 715, y: 434 });
 
     // Step13: Give input as tmaniflow@gmail.com in "To" field
     // Fill "to" via getByRole — pierces shadow DOM in Zoho Flow editor

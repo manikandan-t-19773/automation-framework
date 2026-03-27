@@ -296,17 +296,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   // ── Drag "Set Variable" into Trigger box ──────────────────────────────────────
   if (desc.includes('drag') && desc.includes('set variable') && !desc.includes('drag and drop')) {
     lines.push(
-      `    // Drag "Set Variable" — real DOM: p.zf-module-label (unique, avoids service-li strict-mode)`,
-      `    {`,
-      `      const dragHelper = new DragHelper(page);`,
-      `      await dragHelper.dragAndDrop(`,
-      `        'p.zf-module-label:text-is("Set Variable")',`,
-      `        '',`,
-      `        { x: 715, y: 434 }`,
-      `      );`,
-      `      console.log('Dragged Set Variable to canvas (715, 434)');`,
-      `      await page.waitForTimeout(400);`,
-      `    }`
+      `    // dragModule: proven selector p.zf-module-label:text-is("Set Variable")`,
+      `    await dragModule(page, 'Set Variable', { x: 715, y: 434 });`
     );
     return lines;
   }
@@ -314,17 +305,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   // ── Drag "Decision" into SetVariable action ───────────────────────────────────
   if (desc.includes('drag and drop') && desc.includes('decision') && (desc.includes('setvariable') || desc.includes('set variable'))) {
     lines.push(
-      `    // Drag "Decision" — real DOM: p.zf-module-label (unique label element)`,
-      `    {`,
-      `      const dragHelper = new DragHelper(page);`,
-      `      await dragHelper.dragAndDrop(`,
-      `        'p.zf-module-label:text-is("Decision")',`,
-      `        '',`,
-      `        { x: 715, y: 580 }`,
-      `      );`,
-      `      console.log('Dragged Decision to canvas (715, 580)');`,
-      `      await page.waitForTimeout(400);`,
-      `    }`
+      `    // dragModule: Decision below Set Variable on canvas`,
+      `    await dragModule(page, 'Decision', { x: 715, y: 580 });`
     );
     return lines;
   }
@@ -332,17 +314,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   // ── Drag "Send Mail" → Decision Direct connection (TC3) ───────────────────────
   if (desc.includes('drag and drop') && desc.includes('send mail') && desc.includes('decision')) {
     lines.push(
-      `    // Drag "Send Mail" into Decision — real DOM: p.zf-module-label`,
-      `    {`,
-      `      const dragHelper = new DragHelper(page);`,
-      `      await dragHelper.dragAndDrop(`,
-      `        'p.zf-module-label:text-is("Send Mail")',`,
-      `        '',`,
-      `        { x: 715, y: 720 }`,
-      `      );`,
-      `      console.log('Dragged Send Mail into Decision direct connection (715, 720)');`,
-      `      await page.waitForTimeout(400);`,
-      `    }`
+      `    // dragModule: Send Mail into Decision branch area`,
+      `    await dragModule(page, 'Send Mail', { x: 715, y: 720 });`
     );
     return lines;
   }
@@ -350,17 +323,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   // ── Drag "Send Mail" → Trigger box (TC2, 2nd action after Set Variable) ────────
   if (desc.includes('drag and drop') && desc.includes('send mail') && desc.includes('trigger')) {
     lines.push(
-      `    // Drag "Send Mail" — real DOM: p.zf-module-label`,
-      `    {`,
-      `      const dragHelper = new DragHelper(page);`,
-      `      await dragHelper.dragAndDrop(`,
-      `        'p.zf-module-label:text-is("Send Mail")',`,
-      `        '',`,
-      `        { x: 715, y: 580 }`,
-      `      );`,
-      `      console.log('Dragged Send Mail to canvas (715, 580)');`,
-      `      await page.waitForTimeout(400);`,
-      `    }`
+      `    // dragModule: Send Mail below Set Variable`,
+      `    await dragModule(page, 'Send Mail', { x: 715, y: 580 });`
     );
     return lines;
   }
@@ -599,7 +563,7 @@ function generateSpec(tc: ManualTC): string {
 
   return `import { test, expect } from '../../../fixtures/base';
 import { FlowHelper } from '../../../helpers/flowHelper';
-import { DragHelper } from '../../../helpers/dragHelper';
+import { dragModule } from '../../../helpers/dragHelper';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
