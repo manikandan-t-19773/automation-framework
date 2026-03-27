@@ -62,14 +62,13 @@ export const test = base.extend<ExtraFixtures>({
   page: async ({ page }, use) => {
     const guard = new PageGuard(page);
 
+    // Save original goto BEFORE patching — used for fast pre/post navigation
+    const rawGoto = page.goto.bind(page);
+
     // ── 1. Patch goto ────────────────────────────────────────────────────────
     patchGoto(page, guard);
 
     // ── 2. Pre-test white-screen / SSL guard ─────────────────────────────────
-    // Runs BEFORE every test attempt (including retries). If the page is already
-    // showing a white/error screen from a previous run, reload once. If still
-    // broken, throw RetryFromStartError so this attempt is counted as a retry.
-    // Skip entirely on a fresh page (about:blank) — nothing to check yet.
     const currentUrl = page.url();
     const isBlankPage = !currentUrl || currentUrl === 'about:blank';
     const preIssue = isBlankPage ? null : await guard.detectIssue().catch(() => 'DETECT_FAILED');
@@ -83,9 +82,6 @@ export const test = base.extend<ExtraFixtures>({
     }
 
     // ── 3. Network-failure listener ──────────────────────────────────────────
-    // Logs SSL/certificate request failures and schedules one reload attempt.
-    // The reload gives the app a chance to recover; if the next Playwright
-    // action then times out, Playwright will retry the test from Step 1.
     let reloadScheduled = false;
     page.on('requestfailed', async (request) => {
       const failure = request.failure()?.errorText ?? '';
@@ -103,23 +99,18 @@ export const test = base.extend<ExtraFixtures>({
       }
     });
 
-    // ── 4. Navigate to main page before every test attempt ───────────────────
-    // Ensures every test starts from a known, authenticated landing page
-    // regardless of where the browser was left after a previous run.
-    console.log(`[BaseFixture] Navigating to main page before test…`);
-    await guard.safeGoto(MAIN_PAGE);
+    // ── 4. Open main page before test, wait for loader to clear ─────────────
+    await rawGoto(MAIN_PAGE, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.locator('#loader_parent').waitFor({ state: 'hidden', timeout: 30_000 }).catch(() => {});
 
     try {
       await use(page);
     } finally {
-      // ── 5. Return to main page after every test (pass OR fail) ─────────────
-      // Resets the browser to a clean known state for the next test / report.
+      // ── 5. Return to main page after test — pass OR fail ─────────────────
       try {
-        await page.goto(MAIN_PAGE, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        console.log('[BaseFixture] Main page loaded after test.');
-      } catch {
-        // Non-fatal — don't mask the original test result
-      }
+        await rawGoto(MAIN_PAGE, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+        await page.locator('#loader_parent').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {});
+      } catch { /* non-fatal — don't mask the original test result */ }
     }
   },
 

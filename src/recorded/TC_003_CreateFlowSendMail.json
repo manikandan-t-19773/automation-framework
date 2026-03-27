@@ -1,0 +1,32 @@
+{
+  "id": "TC_003",
+  "name": "CreateFlowSendMail",
+  "url": "https://flow.localzoho.com/#/workspace/default/flows",
+  "description": "Create schedulerflow with SendMail action",
+  "tags": [
+    "settings",
+    "regression"
+  ],
+  "steps": [
+    {
+      "action": "waitForLoadState",
+      "state": "networkidle",
+      "note": "Page fully loaded"
+    },
+    {
+      "action": "click",
+      "role": "link",
+      "name": "My Flows",
+      "note": "Click My Flows Tab"
+    },
+    {
+      "action": "waitForLoadState",
+      "state": "networkidle"
+    },
+    {
+      "action": "assertURL",
+      "url": "/workspace/default/flows",
+      "note": "My Flows tab loaded"
+    }
+  ]
+}

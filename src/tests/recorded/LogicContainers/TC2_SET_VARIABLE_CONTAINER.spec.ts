@@ -48,49 +48,50 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.waitForTimeout(300);
 
     // Step4: Click Create Button
-    // Real locator: input#createFlowButton (type=submit, NOT a <button>)
+    // Proven locator: input#createFlowButton (type=submit) — store pre-URL for hash-router
+    const preCreateUrl = page.url();
     await page.locator('input#createFlowButton, input[name="save"][type="submit"]').first().click();
-    await page.waitForURL(/edit/, { timeout: 30_000 });
+    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });
+    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
     // Step5: Click Configure button in Schedule section
-    // The Configure button appears on the canvas Scheduler trigger card
-    const configBtn = page.locator('button').filter({ hasText: /^configure$/i }).first();
-    await configBtn.waitFor({ state: 'visible', timeout: 20_000 });
-    await configBtn.click();
-    await page.waitForTimeout(1000);
+    // Wait for trigger-chooser text, then click the Schedule Configure button (index 1)
+    await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('button:has-text("Configure")').nth(1).click();
+    await page.waitForTimeout(2000);
 
     // Step6: Click Frequency field and set Once
-    // Frequency select — try native <select> first, then custom dropdown
-    const freqSelect = page.locator('select[name*="freq" i], select[name*="repeat" i]').first();
-    if (await freqSelect.count() > 0) {
-      await freqSelect.selectOption({ label: 'Once' });
-    } else {
-      // custom Ember dropdown
-      await page.locator('[class*="frequency"], [class*="repeat"]').first().click();
-      await page.waitForTimeout(400);
-      await page.getByText('Once', { exact: true }).first().click();
+    // Proven locators from TC2: .customSelect_scheduleBy input.customSelectInputfield
+    const freqWrapper = page.locator('.customSelect_scheduleBy');
+    await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });
+    await freqWrapper.locator('input.customSelectInputfield').click();
+    await page.waitForTimeout(1000);
+    const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();
+    const onceOptFallback = page.getByText('Once', { exact: true }).first();
+    try {
+      await onceOpt.waitFor({ state: 'visible', timeout: 30_000 });
+      await onceOpt.click();
+    } catch {
+      await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });
+      await onceOptFallback.click();
     }
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(500);
 
     // Step7: Click DateField and set 3Minutes later
-    // Set schedule +3 minutes from now
-    const now   = new Date(Date.now() + 3 * 60 * 1000);
-    const yyyy  = now.getFullYear();
-    const mm    = String(now.getMonth() + 1).padStart(2, '0');
-    const dd    = String(now.getDate()).padStart(2, '0');
-    const hh    = String(now.getHours()).padStart(2, '0');
-    const mi    = String(now.getMinutes()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
-    const timeStr = `${hh}:${mi}`;
-    const dateInput = page.locator('input[type="date"], input[name*="date"]').first();
-    if (await dateInput.count() > 0) {
-      await dateInput.fill(dateStr);
-    }
-    const timeInput = page.locator('input[type="time"], input[name*="time"]').first();
-    if (await timeInput.count() > 0) {
-      await timeInput.fill(timeStr);
-    }
+    // Proven locator from TC2: getByRole('textbox', { name: /start date/i })
+    const dateBox = page.getByRole('textbox', { name: /start date/i });
+    await dateBox.waitFor({ state: 'visible', timeout: 30_000 });
+    const future = new Date(Date.now() + 3 * 60_000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const month   = pad(future.getMonth() + 1);
+    const day     = pad(future.getDate());
+    const year    = future.getFullYear();
+    const hours   = pad(future.getHours());
+    const minutes = pad(future.getMinutes());
+    await dateBox.fill('');
+    await dateBox.type(`${month}/${day}/${year} ${hours}:${minutes}`);
     await page.waitForTimeout(400);
 
     // Step8: Click Apply button
@@ -118,12 +119,11 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.waitForTimeout(600);
 
     // Step12: Drag "Set Variable" into Trigger box
-    // Drag "Set Variable" from sidebar to canvas (1st action slot)
+    // Drag "Set Variable" — real DOM: p.zf-module-label (unique, avoids service-li strict-mode)
     {
       const dragHelper = new DragHelper(page);
-      // DragHelper.dragAndDrop(sourceCSS, targetCSS, dropPosition)
       await dragHelper.dragAndDrop(
-        'p:has-text("Set Variable"), span:has-text("Set Variable"), li:has-text("Set Variable")',
+        'p.zf-module-label:text-is("Set Variable")',
         '',
         { x: 715, y: 434 }
       );
@@ -147,17 +147,11 @@ test.describe('[LC_TC2] SET_VARIABLE_CONTAINER', () => {
     await page.waitForTimeout(600);
 
     // Step16: Drag and Drop the "Send Mail" action into Trigger box
-    // Drag "Send Mail" from sidebar to canvas (after Set Variable)
+    // Drag "Send Mail" — real DOM: p.zf-module-label
     {
       const dragHelper = new DragHelper(page);
-      // Search fallback: type "Send Mail" in the search box if not visible
-      const searchBox2 = page.locator('[placeholder*="search" i]').first();
-      if (await searchBox2.count() > 0) {
-        await searchBox2.fill('Send Mail');
-        await page.waitForTimeout(600);
-      }
       await dragHelper.dragAndDrop(
-        'p:has-text("Send Mail"), span:has-text("Send Mail"), li:has-text("Send Mail")',
+        'p.zf-module-label:text-is("Send Mail")',
         '',
         { x: 715, y: 580 }
       );

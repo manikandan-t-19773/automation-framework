@@ -5,11 +5,11 @@ import { DragHelper } from '../../helpers/dragHelper';
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 /**
- * TC2: CreateSchedulerFlow
- * Create schedulerflow with slack app- send direct message action
+ * TC3: CreateFlowSendMail
+ * Create schedulerflow with SendMail action
  * Source: manualtestcasedoc/Settings_standalone.xlsx
  */
-test.describe('[TC2] CreateSchedulerFlow', () => {
+test.describe('[TC3] CreateFlowSendMail', () => {
   let flowName = '';
 
   test.afterEach(async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     }
   });
 
-  test('Create schedulerflow with slack app- send direct message action', async ({ page }) => {
+  test('Create schedulerflow with SendMail action', async ({ page }) => {
     // Allow 2 minutes for all steps (each step waits up to 2 min).
     // Playwright's retries:2 config will restart from Step 1 on failure,
     // up to 2 times before saving trace for the debugging process.
@@ -42,11 +42,11 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     await page.getByRole('button', { name: /create flow/i }).click();
     await page.waitForTimeout(800);
 
-    // Step3: Provide FlowName as "Schflow" in Flow Name field
+    // Step3: Provide FlowName as "sendmailflow" in Flow Name field
     // Flow name input is input[name="displayName"] in the Create Flow dialog
     const flowNameInput = page.locator('input[name="displayName"]').first();
     await flowNameInput.waitFor({ state: 'visible', timeout: 30_000 });
-    await flowNameInput.fill("Schflow");
+    await flowNameInput.fill("sendmailflow");
 
     // Step4: Click Create Button
     // The Create button in Zoho Flow is an <input type="submit"> not a <button>
@@ -106,30 +106,33 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     await page.getByRole('button', { name: /done/i }).click();
     await page.waitForTimeout(800);
 
-    // Step10: Click search icon from leftside to search app name
-    // Zoho Flow builder sidebar search box — aria-label 'Search apps, actions, or logic'
-    const searchInput = page.getByRole('textbox', { name: /search apps/i });
-    await searchInput.waitFor({ state: 'visible', timeout: 30_000 });
-    await searchInput.click();
+    // Step10: Click Build-ins Subtab
+    // Open the sidebar app panel (same as clicking the search icon)
+    const builtinsSearch = page.getByRole('textbox', { name: /search apps/i });
+    await builtinsSearch.waitFor({ state: 'visible', timeout: 30_000 });
+    await builtinsSearch.click();
     await page.waitForTimeout(500);
+    // Switch to the Built-ins tab
+    await page.getByRole('tab', { name: /built.?ins/i })
+      .or(page.getByText('Built-ins', { exact: true })).first().click();
+    await page.waitForTimeout(800);
 
-    // Step11: search appname as slack
-    const appSearchBox = page.getByRole('textbox', { name: /search apps/i });
-    await appSearchBox.waitFor({ state: 'visible', timeout: 30_000 });
-    await appSearchBox.fill("Slack");
-    await page.waitForTimeout(1000);
+    // Step11: Click Notification Section
+    // Expand the Notification accordion in the Built-ins sidebar
+    await page.getByText('Notification', { exact: true }).first().click();
+    await page.waitForTimeout(800);
 
-    // Step12: Drag and Drop the "Send Direct Message" action into "Schedule Once" Trigger
-    // Drag "Send Direct Message" onto the canvas (bbox-based DragHelper)
+    // Step12: Drag and Drop the "Send Mail" action into Trigger box
+    // Drag "Send Mail" onto the canvas (bbox-based DragHelper)
     // Try p, span, and li tags — Built-ins may use a different DOM structure
-    const actionPara = page.locator('p, span, li').filter({ hasText: /Send Direct Message/i }).first();
+    const actionPara = page.locator('p, span, li').filter({ hasText: /Send Mail/i }).first();
     // Fallback: if action not visible from sidebar navigation, search for it directly
     try {
       await actionPara.waitFor({ state: 'visible', timeout: 10_000 });
     } catch {
       const appSrch = page.getByRole('textbox', { name: /search apps/i });
       if (await appSrch.isVisible()) {
-        await appSrch.fill("Send Direct Message");
+        await appSrch.fill("Send Mail");
         await page.waitForTimeout(1000);
       }
       await actionPara.waitFor({ state: 'visible', timeout: 20_000 });
@@ -149,21 +152,24 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
       }
       return '';
     });
-    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "Send Direct Message"');
+    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "Send Mail"');
     // Drop at canvas coordinates derived from the trigger node bbox + 220px below
     await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
     // Give the action config panel 2 s to render after the drop
     await page.waitForTimeout(2000);
 
-    // Step13: give input as test in message field
-    // Connection must be selected first — it unlocks the message/To fields
-    await flow.pickDropdownItem('Choose Connection');
-    // fillActionField falls back to getByRole which pierces shadow DOM
-    await flow.fillActionField('text', 'test');
+    // Step13: Give input as tmaniflow@gmail.com in "To" field
+    // Fill "to" via getByRole — pierces shadow DOM in Zoho Flow editor
+    const toField = page.getByRole('textbox', { name: /^to\b/i });
+    await toField.waitFor({ state: 'visible', timeout: 60_000 });
+    await toField.fill("tmaniflow@gmail.com");
     await page.waitForTimeout(300);
 
-    // Step14: Select 1st option in To Field
-    await flow.pickDropdownItem('Choose To');
+    // Step14: Give input as Automation in "Subject" field
+    // Fill "subject" via getByRole — pierces shadow DOM in Zoho Flow editor
+    const subjectField = page.getByRole('textbox', { name: /^subject\b/i });
+    await subjectField.waitFor({ state: 'visible', timeout: 60_000 });
+    await subjectField.fill("Automation");
     await page.waitForTimeout(300);
 
     // Step15: Click Done button

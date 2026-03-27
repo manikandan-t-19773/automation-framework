@@ -245,6 +245,56 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     return lines;
   }
 
+  // ── Build-ins subtab ────────────────────────────────────────────────────
+  // normalise() converts 'Build-ins' → 'build ins'
+  // Open the sidebar search panel first (same action as TC2's "click search icon" step),
+  // then switch to the Built-ins tab.
+  if (desc.includes('build ins') || desc.includes('builtins') || desc.includes('built ins')) {
+    lines.push(
+      `    // Open the sidebar app panel (same as clicking the search icon)`,
+      `    const builtinsSearch = page.getByRole('textbox', { name: /search apps/i });`,
+      `    await builtinsSearch.waitFor({ state: 'visible', timeout: 30_000 });`,
+      `    await builtinsSearch.click();`,
+      `    await page.waitForTimeout(500);`,
+      `    // Switch to the Built-ins tab`,
+      `    await page.getByRole('tab', { name: /built.?ins/i })`,
+      `      .or(page.getByText('Built-ins', { exact: true })).first().click();`,
+      `    await page.waitForTimeout(800);`
+    );
+    return lines;
+  }
+
+  // ── Notification section ──────────────────────────────────────────────────
+  if (desc.includes('notification section') || desc.includes('click notification')) {
+    lines.push(
+      `    // Expand the Notification accordion in the Built-ins sidebar`,
+      `    await page.getByText('Notification', { exact: true }).first().click();`,
+      `    await page.waitForTimeout(800);`
+    );
+    return lines;
+  }
+
+  // ── Generic fill: "give input as <value> in \"<field>\" field" ───────────────
+  // Handles To / Subject / any named text field in an action config panel.
+  // Extract from original description to preserve case/email/special chars.
+  // Skip if it's the Slack message field — that needs connection selection first.
+  const giveInputRaw = step.description.match(
+    /give input as (.+?) in ["\u2019']([^"\u2019']+)["\u2019']\s*field/i
+  ) ?? step.description.match(/give input as ([^\s]+) in (\w+)\s*field/i);
+  if (giveInputRaw && !desc.includes('message field')) {
+    const fillValue  = giveInputRaw[1].trim();
+    const fieldLabel = giveInputRaw[2].trim().toLowerCase();
+    const varName    = fieldLabel.replace(/\s+/g, '_') + 'Field';
+    lines.push(
+      `    // Fill "${fieldLabel}" via getByRole — pierces shadow DOM in Zoho Flow editor`,
+      `    const ${varName} = page.getByRole('textbox', { name: /^${fieldLabel}\\b/i });`,
+      `    await ${varName}.waitFor({ state: 'visible', timeout: 60_000 });`,
+      `    await ${varName}.fill(${JSON.stringify(fillValue)});`,
+      `    await page.waitForTimeout(300);`
+    );
+    return lines;
+  }
+
   // ── Search icon / search box ──────────────────────────────────────────────
   if (desc.includes('search icon') || desc.includes('click search')) {
     lines.push(
@@ -273,10 +323,22 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc.includes('drag and drop') || desc.includes('draganddrop')) {
     const actionMatch = step.description.match(/"([^"]+)"/g);
     const actionName  = actionMatch?.[0]?.replace(/"/g, '') ?? 'Send Direct Message';
+    const safeRe      = actionName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     lines.push(
       `    // Drag "${actionName}" onto the canvas (bbox-based DragHelper)`,
-      `    const actionPara = page.locator('p').filter({ hasText: /${actionName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}/i }).first();`,
-      `    await actionPara.waitFor({ state: 'visible', timeout: 30_000 });`,
+      `    // Try p, span, and li tags — Built-ins may use a different DOM structure`,
+      `    const actionPara = page.locator('p, span, li').filter({ hasText: /${safeRe}/i }).first();`,
+      `    // Fallback: if action not visible from sidebar navigation, search for it directly`,
+      `    try {`,
+      `      await actionPara.waitFor({ state: 'visible', timeout: 10_000 });`,
+      `    } catch {`,
+      `      const appSrch = page.getByRole('textbox', { name: /search apps/i });`,
+      `      if (await appSrch.isVisible()) {`,
+      `        await appSrch.fill(${JSON.stringify(actionName)});`,
+      `        await page.waitForTimeout(1000);`,
+      `      }`,
+      `      await actionPara.waitFor({ state: 'visible', timeout: 20_000 });`,
+      `    }`,
       `    const dragHelperInst = new DragHelper(page);`,
       `    // Tag the <li> parent; use concat (not template literal) inside evaluate`,
       `    const srcTagged = await actionPara.evaluate(function(el) {`,
@@ -294,17 +356,21 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    });`,
       `    if (!srcTagged) throw new Error('Could not tag <li> ancestor for "${actionName}"');`,
       `    // Drop at canvas coordinates derived from the trigger node bbox + 220px below`,
-      `    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });`
+      `    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });`,
+      `    // Give the action config panel 2 s to render after the drop`,
+      `    await page.waitForTimeout(2000);`
     );
     return lines;
   }
 
   // ── Fill message field (Slack / action panel) ─────────────────────────────
   // Connection must be chosen first to unlock the text fields.
+  // flow.fillActionField falls back to getByRole('textbox',{name}) which pierces shadow DOM.
   if (desc.includes('message field') || (desc.includes('input') && desc.includes('test'))) {
     lines.push(
       `    // Connection must be selected first — it unlocks the message/To fields`,
       `    await flow.pickDropdownItem('Choose Connection');`,
+      `    // fillActionField falls back to getByRole which pierces shadow DOM`,
       `    await flow.fillActionField('text', 'test');`,
       `    await page.waitForTimeout(300);`
     );

@@ -177,5 +177,126 @@
         "locator": ""
       }
     ]
+  },
+  {
+    "id": "3",
+    "name": "CreateFlowSendMail",
+    "description": "Create schedulerflow with SendMail action",
+    "url": "",
+    "auto_status": "",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"sendmailflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click Build-ins Subtab",
+        "expected": "Build-ins subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "Click Notification Section",
+        "expected": "Notification section should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Drag and Drop the \"Send Mail\" action into Trigger box",
+        "expected": "Send Mail action should be drag and dropped and SendMail popup should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "Give input as tmaniflow@gmail.com in \"To\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Give input as Automation in \"Subject\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Swith ON the flow",
+        "expected": "flow should not be SwitchedON",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
   }
 ]
