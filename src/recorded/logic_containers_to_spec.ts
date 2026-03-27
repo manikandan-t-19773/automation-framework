@@ -55,8 +55,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('my flows tab') || desc.includes('click my flows')) {
     lines.push(
       `    await page.getByRole('link', { name: /my flows/i }).click();`,
-      `    await page.waitForLoadState('networkidle');`,
-      `    await page.waitForTimeout(800);`,
+      `    await page.waitForLoadState('domcontentloaded');`,
+      `    await page.waitForTimeout(200);`,
       `    await expect(page).toHaveURL(new RegExp('/workspace/default/flows'));`
     );
     return lines;
@@ -66,7 +66,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('create flow button') || desc.includes('click create flow')) {
     lines.push(
       `    await page.getByRole('button', { name: /create flow/i }).click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -95,8 +95,8 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    const preCreateUrl = page.url();`,
       `    await page.locator('input#createFlowButton, input[name="save"][type="submit"]').first().click();`,
       `    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });`,
-      `    await page.waitForLoadState('networkidle');`,
-      `    await page.waitForTimeout(2000);`
+      `    await page.waitForLoadState('domcontentloaded');`,
+      `    await page.waitForTimeout(400);`
     );
     return lines;
   }
@@ -108,7 +108,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await page.locator('button:has-text("Configure")').nth(1).click();`,
-      `    await page.waitForTimeout(2000);`
+      `    await page.waitForTimeout(400);`
     );
     return lines;
   }
@@ -120,7 +120,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    const freqWrapper = page.locator('.customSelect_scheduleBy');`,
       `    await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await freqWrapper.locator('input.customSelectInputfield').click();`,
-      `    await page.waitForTimeout(1000);`,
+      `    await page.waitForTimeout(200);`,
       `    const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();`,
       `    const onceOptFallback = page.getByText('Once', { exact: true }).first();`,
       `    try {`,
@@ -130,7 +130,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `      await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });`,
       `      await onceOptFallback.click();`,
       `    }`,
-      `    await page.waitForTimeout(500);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -159,7 +159,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('click apply') || desc === 'apply') {
     lines.push(
       `    await page.getByRole('button', { name: /apply/i }).click();`,
-      `    await page.waitForTimeout(500);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -168,7 +168,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('click done') || desc === 'done button') {
     lines.push(
       `    await page.getByRole('button', { name: /^done$/i }).click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -181,7 +181,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    const builtinsBtn = page.locator('span[data-ember-action]').filter({ hasText: /^Built-ins$/i });`,
       `    await builtinsBtn.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await builtinsBtn.first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -190,11 +190,11 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('logic subtab') || (desc.includes('click') && desc.includes('logic'))) {
     lines.push(
       `    // Click the Logic accordion in the Built-ins sidebar`,
-      `    const logicSection = page.locator('span[data-ember-action]').filter({ hasText: /^Logic$/i })
-                           .or(page.getByText('Logic', { exact: true }).first());`,
+      `    // Real DOM: [data-ember-action] (not span-specific) confirmed from live discovery`,
+      `    const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });`,
       `    await logicSection.first().waitFor({ state: 'visible', timeout: 20_000 });`,
       `    await logicSection.first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -203,7 +203,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('subflow subtab') || (desc.includes('click') && desc.includes('"subflow"'))) {
     lines.push(
       `    await page.getByText('Subflow', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -212,7 +212,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('webhooks subtab') || (desc.includes('click') && desc.includes('"webhooks"'))) {
     lines.push(
       `    await page.getByText('Webhooks', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -222,7 +222,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('notification subtab') || desc.includes('"notification" subtab')) {
     lines.push(
       `    await page.getByText('Notification', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -231,16 +231,29 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc === 'click notification section' || desc.includes('notification section')) {
     lines.push(
       `    await page.getByText('Notification', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
 
   // ── Custom Function Subtab ────────────────────────────────────────────────────
+  // DOM: input[value="Custom Function"] exists but has null bbox → must scroll + force
   if (desc.includes('custom function subtab') || (desc.includes('click') && desc.includes('"custom function"'))) {
     lines.push(
-      `    await page.getByText('Custom Function', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    // Custom Function item is in Developer Tools section of Built-ins, may be off-screen`,
+      `    // Use scrollIntoViewIfNeeded + force:true because it renders as input[type=submit]`,
+      `    const cfItem = page.locator('input[value="Custom Function"]').first();`,
+      `    const cfItemCount = await cfItem.count();`,
+      `    if (cfItemCount > 0) {`,
+      `      await cfItem.scrollIntoViewIfNeeded();`,
+      `      await cfItem.click({ force: true });`,
+      `    } else {`,
+      `      // Fallback: search in sidebar searchbox`,
+      `      await page.locator('input[name="searchbox"]').fill('Custom Function');`,
+      `      await page.waitForTimeout(200);`,
+      `      await page.locator('p.zf-module-label:text-is("Custom Function"), .zf-module-label:has-text("Custom Function")').first().click({ force: true });`,
+      `    }`,
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -249,23 +262,28 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   if (desc.includes('commands') && desc.includes('scripts') && desc.includes('subtab')) {
     lines.push(
       `    await page.getByText('Commands & Scripts', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
 
   // ── Verify element present ────────────────────────────────────────────────────
   if (desc.startsWith('verify') && (desc.includes('present') || desc.includes('displayed'))) {
-    const elem = quoted(desc);
+    // Use raw (not lowercased desc) to preserve original text like "SetVariable"
+    const elem = quoted(raw);
+    const stepSlugV = normalise(step.step || 'step').replace(/\s+/g, '_');
     if (elem) {
+      // camelCase → spaced version for UI label (e.g. "SetVariable" → "Set Variable")
+      const elemSpaced = elem.replace(/([a-z])([A-Z])/g, '$1 $2');
+      const veVar = `verifyEl_${stepSlugV}`;
       lines.push(
-        `    // Verify "${elem}" is visible in the panel`,
-        `    await expect(page.getByText(${JSON.stringify(elem)}, { exact: true }).first()).toBeVisible({ timeout: 20_000 });`
+        `    // Verify element — check both camelCase form and spaced form`,
+        `    const ${veVar} = page.getByText(${JSON.stringify(elemSpaced)}, { exact: true }).first()`,
+        `                           .or(page.getByText(${JSON.stringify(elem)}, { exact: false }).first());`,
+        `    await expect(${veVar}).toBeVisible({ timeout: 20_000 });`
       );
     } else if (desc.includes('custom function')) {
-      // Verify "any 1 of custom function record available"
       lines.push(
-        `    // Verify at least 1 custom function item is visible`,
         `    const cfItems = page.locator('[class*="action-item"], [class*="list-item"], li').filter({ hasText: /function|custom/i });`,
         `    await expect(cfItems.first()).toBeVisible({ timeout: 20_000 });`
       );
@@ -287,7 +305,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `        { x: 715, y: 434 }`,
       `      );`,
       `      console.log('Dragged Set Variable to canvas (715, 434)');`,
-      `      await page.waitForTimeout(1200);`,
+      `      await page.waitForTimeout(400);`,
       `    }`
     );
     return lines;
@@ -305,7 +323,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `        { x: 715, y: 580 }`,
       `      );`,
       `      console.log('Dragged Decision to canvas (715, 580)');`,
-      `      await page.waitForTimeout(1200);`,
+      `      await page.waitForTimeout(400);`,
       `    }`
     );
     return lines;
@@ -323,7 +341,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `        { x: 715, y: 720 }`,
       `      );`,
       `      console.log('Dragged Send Mail into Decision direct connection (715, 720)');`,
-      `      await page.waitForTimeout(1200);`,
+      `      await page.waitForTimeout(400);`,
       `    }`
     );
     return lines;
@@ -341,7 +359,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `        { x: 715, y: 580 }`,
       `      );`,
       `      console.log('Dragged Send Mail to canvas (715, 580)');`,
-      `      await page.waitForTimeout(1200);`,
+      `      await page.waitForTimeout(400);`,
       `    }`
     );
     return lines;
@@ -353,14 +371,13 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
     const valMatch = desc.match(/^give\s+"([^"]+)"\s+input/i)
                   || desc.match(/^give\s+as\s+"([^"]+)"\s+value/i);
     const fillValue = valMatch ? valMatch[1] : 'testvalue';
-    // Use a unique var name based on step to avoid redeclaration
     const stepSlug2 = normalise(step.step || 'step').replace(/\s+/g, '_');
     const vfVar = `valueField_${stepSlug2}`;
     lines.push(
-      `    // Fill the Value field in the action config panel`,
-      `    const ${vfVar} = page.getByRole('textbox', { name: /^value$/i }).or(page.locator('input[placeholder*="value" i], textarea[placeholder*="value" i]').first());`,
-      `    await ${vfVar}.first().waitFor({ state: 'visible', timeout: 30_000 });`,
-      `    await ${vfVar}.first().fill(${JSON.stringify(fillValue)});`,
+      `    // Value field — real DOM selector confirmed: input[name="variableValue"]`,
+      `    const ${vfVar} = page.locator('input[name="variableValue"]');`,
+      `    await ${vfVar}.waitFor({ state: 'visible', timeout: 30_000 });`,
+      `    await ${vfVar}.fill(${JSON.stringify(fillValue)});`,
       `    await page.waitForTimeout(300);`
     );
     return lines;
@@ -472,7 +489,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `      while (el && window.getComputedStyle(el).cursor !== 'pointer') el = el.parentElement;`,
       `      (el ?? inp).click();`,
       `    });`,
-      `    await page.waitForTimeout(1500);`,
+      `    await page.waitForTimeout(300);`,
       assert
     );
     return lines;
@@ -484,7 +501,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    // Click History tab in the flow editor`,
       `    await page.getByRole('tab', { name: /history/i }).first()`,
       `              .or(page.getByText('History', { exact: true }).first()).click();`,
-      `    await page.waitForTimeout(1000);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -510,7 +527,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    } else {`,
       `      await page.locator('button').filter({ hasText: /refresh/i }).first().click();`,
       `    }`,
-      `    await page.waitForTimeout(1500);`
+      `    await page.waitForTimeout(300);`
     );
     return lines;
   }
@@ -522,7 +539,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    const execRow = page.locator('table tbody tr, [class*="execution-row"], [class*="history-item"]').first();`,
       `    await execRow.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await execRow.click();`,
-      `    await page.waitForTimeout(1000);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -532,7 +549,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
     lines.push(
       `    // Click the Input section of the Set Variable execution detail`,
       `    await page.getByText('Input', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -542,7 +559,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
     lines.push(
       `    // Click the Output section of the Set Variable execution detail`,
       `    await page.getByText('Output', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -557,7 +574,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
       `    } else {`,
       `      await page.keyboard.press('Escape');`,
       `    }`,
-      `    await page.waitForTimeout(600);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -567,7 +584,7 @@ function stepToCode(step: ManualStep, tcId: string, ctxRef: { flowName: string }
   lines.push(
     `    // TODO: implement — "${raw}"`,
     `    await page.screenshot({ path: 'test-results/${tcId}_${stepSlug}.png', fullPage: false });`,
-    `    await page.waitForTimeout(500);`
+    `    await page.waitForTimeout(200);`
   );
   return lines;
 }
@@ -604,12 +621,12 @@ test.describe('[LC_TC${tc.id}] ${tc.name}', () => {
   });
 
   test('${tc.description}', async ({ page }) => {
-    test.setTimeout(1_500_000); // 25 min ceiling (scheduler wait = 4 min)
+    test.setTimeout(300_000); // 25 min ceiling (scheduler wait = 4 min)
     const flow = new FlowHelper(page);
 
     await page.goto('${FLOWS_URL}');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(300);
 
 ${stepLines}
   });

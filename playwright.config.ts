@@ -7,11 +7,10 @@ export default defineConfig({
   testDir: './src/tests',
   fullyParallel: true,
   workers: 2,
-  /** 25 min per test — maximum allowed run time per test case. */
-  timeout: 1_500_000,
-  /** Per-assertion wait: 30 s — assertions resolve in <5 s on a healthy page.
-   *  Failure detected 4× faster than the previous 120 s value. */
-  expect: { timeout: 30_000 },
+  /** 5 min per test — sufficient for the longest flow (create+configure+drag+fill). */
+  timeout: 300_000,
+  /** Per-assertion wait: 15 s — visible elements resolve in <5 s on a healthy page. */
+  expect: { timeout: 15_000 },
   retries: 1,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -24,9 +23,9 @@ export default defineConfig({
     actionTimeout: 30_000,
     /** 60 s per navigation — Zoho SPA route changes take 5–15 s; 60 s is generous. */
     navigationTimeout: 60_000,
-    screenshot: 'on',
-    video: 'on',
-    trace: 'on',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
     ignoreHTTPSErrors: true,
   },
   projects: [

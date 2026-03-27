@@ -87,8 +87,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc.includes('my flows tab') || desc.includes('click my flows')) {
     lines.push(
       `    await page.getByRole('link', { name: /my flows/i }).click();`,
-      `    await page.waitForLoadState('networkidle');`,
-      `    await page.waitForTimeout(800);`,
+      `    await page.waitForLoadState('domcontentloaded');`,
+      `    await page.waitForTimeout(200);`,
       `    await expect(page).toHaveURL(new RegExp("/workspace/default/flows"));`
     );
     return lines;
@@ -98,8 +98,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc === 'click on the settings menu' || desc === 'click settings') {
     lines.push(
       `    await page.getByRole('link', { name: 'Settings' }).click();`,
-      `    await page.waitForLoadState('networkidle');`,
-      `    await page.waitForTimeout(800);`,
+      `    await page.waitForLoadState('domcontentloaded');`,
+      `    await page.waitForTimeout(200);`,
       `    await expect(page.getByRole('heading', { name: 'GENERAL' })).toBeVisible();`,
       `    await expect(page.getByRole('heading', { name: 'FLOW SETUP' })).toBeVisible();`,
       `    await expect(page.getByRole('heading', { name: 'MONITORING' })).toBeVisible();`,
@@ -115,8 +115,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       const linkText = NAV_TEXT_TO_LINK_TEXT[key] ?? key;
       lines.push(
         `    await page.getByRole('link', { name: ${JSON.stringify(linkText)} }).click();`,
-        `    await page.waitForLoadState('networkidle');`,
-        `    await page.waitForTimeout(800);`
+        `    await page.waitForLoadState('domcontentloaded');`,
+        `    await page.waitForTimeout(200);`
       );
       // Drive the URL assertion from the Expected Result column
       if (step.expected.toLowerCase().includes('should not be displayed')) {
@@ -137,7 +137,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc.includes('click create flow') || desc.includes('create flow button')) {
     lines.push(
       `    await page.getByRole('button', { name: /create flow/i }).click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -167,8 +167,8 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    const preCreateUrl = page.url();`,
       `    await createBtn.click();`,
       `    await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });`,
-      `    await page.waitForLoadState('networkidle');`,
-      `    await page.waitForTimeout(2000);`
+      `    await page.waitForLoadState('domcontentloaded');`,
+      `    await page.waitForTimeout(400);`
     );
     return lines;
   }
@@ -181,7 +181,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });`,
       `    // Schedule is 2nd Configure button: App(0), Schedule(1), Webhook(2)`,
       `    await page.locator('button:has-text("Configure")').nth(1).click();`,
-      `    await page.waitForTimeout(2000);`
+      `    await page.waitForTimeout(400);`
     );
     return lines;
   }
@@ -193,7 +193,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    const freqWrapper = page.locator('.customSelect_scheduleBy');`,
       `    await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await freqWrapper.locator('input.customSelectInputfield').click();`,
-      `    await page.waitForTimeout(1000);`,
+      `    await page.waitForTimeout(200);`,
       `    const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();`,
       `    const onceOptFallback = page.getByText('Once', { exact: true }).first();`,
       `    try {`,
@@ -203,7 +203,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `      await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });`,
       `      await onceOptFallback.click();`,
       `    }`,
-      `    await page.waitForTimeout(500);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -222,7 +222,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    await dateBox.click();`,
       `    await dateBox.fill(dateStr);`,
       `    await page.keyboard.press('Tab'); // confirm the date picker`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -231,7 +231,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if (desc.includes('apply button') || desc === 'click apply button') {
     lines.push(
       `    await page.getByRole('button', { name: /apply/i }).click();`,
-      `    await page.waitForTimeout(500);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -240,7 +240,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   if ((desc.includes('done button') || desc === 'click done button') && !desc.includes('search')) {
     lines.push(
       `    await page.getByRole('button', { name: /done/i }).click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -255,11 +255,11 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    const builtinsSearch = page.getByRole('textbox', { name: /search apps/i });`,
       `    await builtinsSearch.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await builtinsSearch.click();`,
-      `    await page.waitForTimeout(500);`,
+      `    await page.waitForTimeout(200);`,
       `    // Switch to the Built-ins tab`,
       `    await page.getByRole('tab', { name: /built.?ins/i })`,
       `      .or(page.getByText('Built-ins', { exact: true })).first().click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -269,7 +269,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
     lines.push(
       `    // Expand the Notification accordion in the Built-ins sidebar`,
       `    await page.getByText('Notification', { exact: true }).first().click();`,
-      `    await page.waitForTimeout(800);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -302,7 +302,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    const searchInput = page.getByRole('textbox', { name: /search apps/i });`,
       `    await searchInput.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await searchInput.click();`,
-      `    await page.waitForTimeout(500);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -314,7 +314,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    const appSearchBox = page.getByRole('textbox', { name: /search apps/i });`,
       `    await appSearchBox.waitFor({ state: 'visible', timeout: 30_000 });`,
       `    await appSearchBox.fill(${JSON.stringify(appName)});`,
-      `    await page.waitForTimeout(1000);`
+      `    await page.waitForTimeout(200);`
     );
     return lines;
   }
@@ -335,7 +335,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `      const appSrch = page.getByRole('textbox', { name: /search apps/i });`,
       `      if (await appSrch.isVisible()) {`,
       `        await appSrch.fill(${JSON.stringify(actionName)});`,
-      `        await page.waitForTimeout(1000);`,
+      `        await page.waitForTimeout(200);`,
       `      }`,
       `      await actionPara.waitFor({ state: 'visible', timeout: 20_000 });`,
       `    }`,
@@ -358,7 +358,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `    // Drop at canvas coordinates derived from the trigger node bbox + 220px below`,
       `    await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });`,
       `    // Give the action config panel 2 s to render after the drop`,
-      `    await page.waitForTimeout(2000);`
+      `    await page.waitForTimeout(400);`
     );
     return lines;
   }
@@ -408,7 +408,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
       `      while (el && window.getComputedStyle(el).cursor !== 'pointer') el = el.parentElement;`,
       `      (el ?? input).click();`,
       `    });`,
-      `    await page.waitForTimeout(1500);`,
+      `    await page.waitForTimeout(300);`,
       `    const flowToggle = page.locator('input[name="switch"], input.switch-input').first();`,
       toggleAssertion
     );
@@ -419,7 +419,7 @@ function stepToPlaywright(step: ManualStep, tcId: string): string[] {
   lines.push(
     `    // TODO: manual step — "${step.description}"`,
     `    await page.screenshot({ path: 'test-results/${tcId}_${normalise(step.step).replace(/\s+/g,'_')}.png', fullPage: false });`,
-    `    await page.waitForTimeout(500);`
+    `    await page.waitForTimeout(200);`
   );
   return lines;
 }
@@ -476,13 +476,13 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
     // Allow 2 minutes for all steps (each step waits up to 2 min).
     // Playwright's retries:2 config will restart from Step 1 on failure,
     // up to 2 times before saving trace for the debugging process.
-    test.setTimeout(1_500_000);
+    test.setTimeout(300_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
     await page.goto(${JSON.stringify(startUrl)});
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(300);
 
 ${stepLines}
   });
@@ -504,14 +504,14 @@ test.describe('[TC${tc.id}] ${tc.name}', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto(${JSON.stringify(startUrl)});
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(300);
   });
 
   test('${tc.description}', async ({ page }) => {
     // Allow 2 min; retries:2 in playwright.config.ts restarts from Step 1
     // on failure. After 2 retries the trace is saved for the debugging process.
-    test.setTimeout(1_500_000);
+    test.setTimeout(300_000);
 ${stepLines}
   });
 });

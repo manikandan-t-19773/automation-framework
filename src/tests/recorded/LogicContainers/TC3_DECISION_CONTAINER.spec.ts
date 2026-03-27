@@ -22,22 +22,22 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
   });
 
   test('Validate the  condition in the decision container are working', async ({ page }) => {
-    test.setTimeout(1_500_000); // 25 min ceiling (scheduler wait = 4 min)
+    test.setTimeout(300_000); // 25 min ceiling (scheduler wait = 4 min)
     const flow = new FlowHelper(page);
 
     await page.goto('https://flow.localzoho.com/#/workspace/default/flows');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(300);
 
     // Step1: Click My Flows Tab
     await page.getByRole('link', { name: /my flows/i }).click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(200);
     await expect(page).toHaveURL(new RegExp('/workspace/default/flows'));
 
     // Step2: Click Create Flow button in MyFlows Tab
     await page.getByRole('button', { name: /create flow/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step3: Provide FlowName as "sendmailflow" in Flow Name field
     flowName = 'sendmailflow';
@@ -52,22 +52,22 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
     const preCreateUrl = page.url();
     await page.locator('input#createFlowButton, input[name="save"][type="submit"]').first().click();
     await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(400);
 
     // Step5: Click Configure button in Schedule section
     // Wait for trigger-chooser text, then click the Schedule Configure button (index 1)
     await page.getByText('Choose the event that triggers your flow').waitFor({ state: 'visible', timeout: 30_000 });
     await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });
     await page.locator('button:has-text("Configure")').nth(1).click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(400);
 
     // Step6: Click Frequency field and set Once
     // Proven locators from TC2: .customSelect_scheduleBy input.customSelectInputfield
     const freqWrapper = page.locator('.customSelect_scheduleBy');
     await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });
     await freqWrapper.locator('input.customSelectInputfield').click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
     const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();
     const onceOptFallback = page.getByText('Once', { exact: true }).first();
     try {
@@ -77,7 +77,7 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
       await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });
       await onceOptFallback.click();
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Step7: Click DateField and set 3Minutes later
     // Proven locator from TC2: getByRole('textbox', { name: /start date/i })
@@ -96,11 +96,11 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
 
     // Step8: Click Apply button
     await page.getByRole('button', { name: /apply/i }).click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Step9: Click Done button
     await page.getByRole('button', { name: /^done$/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step10: Click Build-ins Subtab
     // Real locator: span[data-ember-action] with text "Built-ins"
@@ -108,15 +108,15 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
     const builtinsBtn = page.locator('span[data-ember-action]').filter({ hasText: /^Built-ins$/i });
     await builtinsBtn.waitFor({ state: 'visible', timeout: 30_000 });
     await builtinsBtn.first().click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
 
     // Step11: Click Logic Subtab
     // Click the Logic accordion in the Built-ins sidebar
-    const logicSection = page.locator('span[data-ember-action]').filter({ hasText: /^Logic$/i })
-                           .or(page.getByText('Logic', { exact: true }).first());
+    // Real DOM: [data-ember-action] (not span-specific) confirmed from live discovery
+    const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });
     await logicSection.first().waitFor({ state: 'visible', timeout: 20_000 });
     await logicSection.first().click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
 
     // Step12: Drag "Set Variable" into Trigger box
     // Drag "Set Variable" — real DOM: p.zf-module-label (unique, avoids service-li strict-mode)
@@ -128,19 +128,19 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
         { x: 715, y: 434 }
       );
       console.log('Dragged Set Variable to canvas (715, 434)');
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(400);
     }
 
     // Step13: Give "qatest" input in "Value" field
-    // Fill the Value field in the action config panel
-    const valueField_step13 = page.getByRole('textbox', { name: /^value$/i }).or(page.locator('input[placeholder*="value" i], textarea[placeholder*="value" i]').first());
-    await valueField_step13.first().waitFor({ state: 'visible', timeout: 30_000 });
-    await valueField_step13.first().fill("qatest");
+    // Value field — real DOM selector confirmed: input[name="variableValue"]
+    const valueField_step13 = page.locator('input[name="variableValue"]');
+    await valueField_step13.waitFor({ state: 'visible', timeout: 30_000 });
+    await valueField_step13.fill("qatest");
     await page.waitForTimeout(300);
 
     // Step14: Click Done button
     await page.getByRole('button', { name: /^done$/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step15: Drag and Drop the "Decision" box into SetVariable action
     // Drag "Decision" — real DOM: p.zf-module-label (unique label element)
@@ -152,7 +152,7 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
         { x: 715, y: 580 }
       );
       console.log('Dragged Decision to canvas (715, 580)');
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(400);
     }
 
     // Step16: Click 1st Choose option
@@ -182,19 +182,19 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
     await page.waitForTimeout(400);
 
     // Step20: Give as "qa" value in input field
-    // Fill the Value field in the action config panel
-    const valueField_step20 = page.getByRole('textbox', { name: /^value$/i }).or(page.locator('input[placeholder*="value" i], textarea[placeholder*="value" i]').first());
-    await valueField_step20.first().waitFor({ state: 'visible', timeout: 30_000 });
-    await valueField_step20.first().fill("qa");
+    // Value field — real DOM selector confirmed: input[name="variableValue"]
+    const valueField_step20 = page.locator('input[name="variableValue"]');
+    await valueField_step20.waitFor({ state: 'visible', timeout: 30_000 });
+    await valueField_step20.fill("qa");
     await page.waitForTimeout(300);
 
     // Step21: Click Done button
     await page.getByRole('button', { name: /^done$/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step22: Click Notification Section
     await page.getByText('Notification', { exact: true }).first().click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
 
     // Step23: Drag and Drop the "Send Mail" action into the "Decision" action Direct connection
     // Drag "Send Mail" into Decision — real DOM: p.zf-module-label
@@ -206,7 +206,7 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
         { x: 715, y: 720 }
       );
       console.log('Dragged Send Mail into Decision direct connection (715, 720)');
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(400);
     }
 
     // Step24: Give input as tmaniflow@gmail.com in "To" field
@@ -223,7 +223,7 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
 
     // Step26: Click Done button
     await page.getByRole('button', { name: /^done$/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step27: Swith ON the flow
     // Expected Result (xlsx): "flow should be SwitchedON"
@@ -237,14 +237,14 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
       while (el && window.getComputedStyle(el).cursor !== 'pointer') el = el.parentElement;
       (el ?? inp).click();
     });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(300);
     await expect(flowToggle).toBeChecked({ timeout: 30_000 });     // Expected: "flow should be SwitchedON"
 
     // Step28: Click History Subtab
     // Click History tab in the flow editor
     await page.getByRole('tab', { name: /history/i }).first()
               .or(page.getByText('History', { exact: true }).first()).click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     // Step29: Wait until set the trigger scheduler Time
     // Wait for the scheduled trigger to fire (+3 min set above, wait 4 min to be safe)
@@ -256,24 +256,24 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
     // Click History tab in the flow editor
     await page.getByRole('tab', { name: /history/i }).first()
               .or(page.getByText('History', { exact: true }).first()).click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     // Step31: Click latest execution Record
     // Click the most-recent execution record in the History list
     const execRow = page.locator('table tbody tr, [class*="execution-row"], [class*="history-item"]').first();
     await execRow.waitFor({ state: 'visible', timeout: 30_000 });
     await execRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     // Step32: Click Setvariable Input
     // Click the Input section of the Set Variable execution detail
     await page.getByText('Input', { exact: true }).first().click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
 
     // Step33: Click Setvariable output
     // Click the Output section of the Set Variable execution detail
     await page.getByText('Output', { exact: true }).first().click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
 
     // Step34: Click close window icon
     // Close the execution detail modal/panel
@@ -283,6 +283,6 @@ test.describe('[LC_TC3] DECISION_CONTAINER', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(200);
   });
 });

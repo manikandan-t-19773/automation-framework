@@ -24,23 +24,23 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     // Allow 2 minutes for all steps (each step waits up to 2 min).
     // Playwright's retries:2 config will restart from Step 1 on failure,
     // up to 2 times before saving trace for the debugging process.
-    test.setTimeout(1_500_000);
+    test.setTimeout(300_000);
     const flow = new FlowHelper(page);
 
     // Navigate to the start URL before running steps
     await page.goto("https://flow.localzoho.com/#/workspace/default/flows");
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(300);
 
     // Step1: Click My Flows Tab
     await page.getByRole('link', { name: /my flows/i }).click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(200);
     await expect(page).toHaveURL(new RegExp("/workspace/default/flows"));
 
     // Step2: Click Create Flow button in MyFlows Tab
     await page.getByRole('button', { name: /create flow/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step3: Provide FlowName as "Schflow" in Flow Name field
     // Flow name input is input[name="displayName"] in the Create Flow dialog
@@ -56,8 +56,8 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     const preCreateUrl = page.url();
     await createBtn.click();
     await page.waitForURL(url => url.href.includes('/edit') && url.href !== preCreateUrl, { timeout: 30_000 });
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(400);
 
     // Step5: Click Configure button in Schedule section
     // Use exact:true to avoid matching hidden sidebar labels like 'Schedule meeting'
@@ -65,14 +65,14 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     await page.getByText('Schedule', { exact: true }).waitFor({ state: 'visible', timeout: 30_000 });
     // Schedule is 2nd Configure button: App(0), Schedule(1), Webhook(2)
     await page.locator('button:has-text("Configure")').nth(1).click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(400);
 
     // Step6: Click Frequency field and set Once
     // 3 custom selects in dialog: customSelect_flows(1st), customSelect_scheduleBy/Frequency(2nd), customSelect_timeZone(3rd)
     const freqWrapper = page.locator('.customSelect_scheduleBy');
     await freqWrapper.waitFor({ state: 'visible', timeout: 30_000 });
     await freqWrapper.locator('input.customSelectInputfield').click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
     const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect_scheduleBy div, .customSelect-ul li').filter({ hasText: /^Once$/i }).first();
     const onceOptFallback = page.getByText('Once', { exact: true }).first();
     try {
@@ -82,7 +82,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
       await onceOptFallback.waitFor({ state: 'visible', timeout: 30_000 });
       await onceOptFallback.click();
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Step7: Click DateField and set 3Minutes later
     // Zoho Flow scheduler uses a textbox with aria-label "Start Date"
@@ -96,28 +96,28 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     await dateBox.click();
     await dateBox.fill(dateStr);
     await page.keyboard.press('Tab'); // confirm the date picker
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step8: Click Apply button
     await page.getByRole('button', { name: /apply/i }).click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Step9: Click Done button
     await page.getByRole('button', { name: /done/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step10: Click search icon from leftside to search app name
     // Zoho Flow builder sidebar search box — aria-label 'Search apps, actions, or logic'
     const searchInput = page.getByRole('textbox', { name: /search apps/i });
     await searchInput.waitFor({ state: 'visible', timeout: 30_000 });
     await searchInput.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Step11: search appname as slack
     const appSearchBox = page.getByRole('textbox', { name: /search apps/i });
     await appSearchBox.waitFor({ state: 'visible', timeout: 30_000 });
     await appSearchBox.fill("Slack");
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     // Step12: Drag and Drop the "Send Direct Message" action into "Schedule Once" Trigger
     // Drag "Send Direct Message" onto the canvas (bbox-based DragHelper)
@@ -130,7 +130,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
       const appSrch = page.getByRole('textbox', { name: /search apps/i });
       if (await appSrch.isVisible()) {
         await appSrch.fill("Send Direct Message");
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(200);
       }
       await actionPara.waitFor({ state: 'visible', timeout: 20_000 });
     }
@@ -153,7 +153,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     // Drop at canvas coordinates derived from the trigger node bbox + 220px below
     await dragHelperInst.dragAndDrop(srcTagged, '', { x: 715, y: 434 });
     // Give the action config panel 2 s to render after the drop
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(400);
 
     // Step13: give input as test in message field
     // Connection must be selected first — it unlocks the message/To fields
@@ -168,7 +168,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
 
     // Step15: Click Done button
     await page.getByRole('button', { name: /done/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
 
     // Step16: Swith ON the flow
     // Expected Result (xlsx): "flow should not be SwitchedON"
@@ -180,7 +180,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
       while (el && window.getComputedStyle(el).cursor !== 'pointer') el = el.parentElement;
       (el ?? input).click();
     });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(300);
     const flowToggle = page.locator('input[name="switch"], input.switch-input').first();
     await expect(flowToggle).not.toBeChecked({ timeout: 30_000 }); // Expected: "flow should not be SwitchedON"
   });
