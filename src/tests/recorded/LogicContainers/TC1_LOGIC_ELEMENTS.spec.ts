@@ -64,8 +64,16 @@ test.describe('[TC1] LOGIC ELEMENTS', () => {
     const freqWrapper = page.locator('.customSelect_scheduleBy');
     await freqWrapper.waitFor({ state: 'visible', timeout: 15_000 });
     await freqWrapper.locator('input.customSelectInputfield').click();
-    await page.waitForTimeout(400);
-    await page.locator('.customSelect_scheduleBy li').filter({ hasText: /^Once$/i }).first().click();
+    await page.waitForTimeout(600);
+    // waitFor dropdown list item before clicking (renders async)
+    try {
+      const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect-ul li')
+        .filter({ hasText: /^Once$/i }).first();
+      await onceOpt.waitFor({ state: 'visible', timeout: 8_000 });
+      await onceOpt.click();
+    } catch {
+      await page.getByText('Once', { exact: true }).first().click();
+    }
 
     // Step7: Click DateField and set 3Minutes later
     {
@@ -83,90 +91,73 @@ test.describe('[TC1] LOGIC ELEMENTS', () => {
     await page.waitForTimeout(600);
 
     // Step10: Click Built-ins Subtab
-    const builtinsTab = page.locator('[data-ember-action]').filter({ hasText: /^Built-ins$/i });
-    await builtinsTab.first().waitFor({ state: 'visible', timeout: 20_000 });
-    await builtinsTab.first().click();
+    try {
+      const builtinsTab = page.locator('[data-ember-action]').filter({ hasText: /^Built-ins$/i });
+      await builtinsTab.first().waitFor({ state: 'visible', timeout: 20_000 });
+      await builtinsTab.first().click();
+    } catch {
+      await page.getByText('Built-ins', { exact: true }).first().click();
+    }
     await page.waitForTimeout(1200);
 
     // Step11: Click Logic Subtab
-    const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });
-    await logicSection.first().waitFor({ state: 'visible', timeout: 10_000 });
-    await logicSection.first().click();
+    try {
+      const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });
+      await logicSection.first().waitFor({ state: 'visible', timeout: 8_000 });
+      await logicSection.first().click();
+    } catch {
+      await page.getByText('Logic', { exact: true }).first().click();
+    }
     await page.waitForTimeout(600);
 
-    // Step12: Verify "SetVariable" Present
-    // Verify "SetVariable" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("SetVariable", 'i') }).first()
-        .or(page.getByText("SetVariable", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    // Step12: Verify "Set Variable" Present
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Set\s*Variable/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step13: Verify "Decision" Present
-    // Verify "Decision" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("Decision", 'i') }).first()
-        .or(page.getByText("Decision", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Decision/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step14: Verify "Delay" Present
-    // Verify "Delay" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("Delay", 'i') }).first()
-        .or(page.getByText("Delay", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Delay/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step15: Verify "If else" Present
-    // Verify "If else" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("If\\\\s*else", 'i') }).first()
-        .or(page.getByText("If else", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /If\s*else/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step16: Click "Subflow" Subtab
     await page.getByText('Subflow', { exact: true }).first().click();
     await page.waitForTimeout(400);
 
     // Step17: Verify "Call a subflow" Present
-    // Verify "Call a subflow" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("Call\\\\s*a\\\\s*subflow", 'i') }).first()
-        .or(page.getByText("Call a subflow", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Call\s*a\s*subflow/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step18: Click "Webhooks" Subtab
     await page.getByText('Webhooks', { exact: true }).first().click();
     await page.waitForTimeout(400);
 
     // Step19: Verify "Send Webhook" Present
-    // Verify "Send Webhook" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("Send\\\\s*Webhook", 'i') }).first()
-        .or(page.getByText("Send Webhook", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Send\s*Webhook/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step20: Click "Notification" Subtab
-    await page.locator('[data-ember-action]').filter({ hasText: /^Notification$/i }).first().click();
+    try {
+      const notifSection = page.locator('[data-ember-action]').filter({ hasText: /^Notification$/i });
+      await notifSection.first().waitFor({ state: 'visible', timeout: 8_000 });
+      await notifSection.first().click();
+    } catch {
+      await page.getByText('Notification', { exact: true }).first().click();
+    }
     await page.waitForTimeout(400);
 
     // Step21: Verify "Send Email" Present
-    // Verify "Send Email" is present
-    await expect(
-      page.locator('p.zf-module-label, .zf-module-label, li, span, p')
-        .filter({ hasText: new RegExp("Send\\\\s*Email", 'i') }).first()
-        .or(page.getByText("Send Email", { exact: true }).first())
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.zf-module-label').filter({ hasText: /Send\s*Email/i }).first()).toBeVisible({ timeout: 15_000 });
 
     // Step22: Click "Custom Function" Subtab
     // Custom Function is an accordion section in Built-ins sidebar
-    const cfSection = page.locator('[data-ember-action]').filter({ hasText: /custom function/i });
-    await cfSection.first().waitFor({ state: 'visible', timeout: 8_000 });
-    await cfSection.first().click();
+    try {
+      const cfSection = page.locator('[data-ember-action]').filter({ hasText: /custom function/i });
+      await cfSection.first().waitFor({ state: 'visible', timeout: 8_000 });
+      await cfSection.first().click();
+    } catch {
+      await page.getByText('Custom Function', { exact: true }).first().click();
+    }
     await page.waitForTimeout(400);
 
     // Step23: Verify any 1 of custom function record available
@@ -174,9 +165,13 @@ test.describe('[TC1] LOGIC ELEMENTS', () => {
     // Add custom functions to workspace to enable this check
 
     // Step24: Click "Commands & Scripts" Subtab
-    const cmdsSection = page.locator('[data-ember-action]').filter({ hasText: /commands/i });
-    await cmdsSection.first().waitFor({ state: 'visible', timeout: 8_000 });
-    await cmdsSection.first().click();
+    try {
+      const cmdsSection = page.locator('[data-ember-action]').filter({ hasText: /commands/i });
+      await cmdsSection.first().waitFor({ state: 'visible', timeout: 8_000 });
+      await cmdsSection.first().click();
+    } catch {
+      await page.getByText('Commands & Scripts', { exact: true }).first().click();
+    }
     await page.waitForTimeout(400);
 
     // Step25: Verify "Execute Base script" Present

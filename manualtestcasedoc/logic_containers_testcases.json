@@ -71,7 +71,7 @@
       },
       {
         "step": "Step10",
-        "description": "Click Built-ins Subtab",
+        "description": "Click \"Built-ins\" Subtab",
         "expected": "Built-ins subtab should be clicked",
         "remarks": "",
         "locator": ""
@@ -255,8 +255,8 @@
       },
       {
         "step": "Step10",
-        "description": "Click Built-ins Subtab",
-        "expected": "Built-ins subtab should be clicked",
+        "description": "Click \"Built-ins\" Subtab",
+        "expected": "\"Built-ins\" subtab should be clicked",
         "remarks": "",
         "locator": ""
       },
@@ -297,21 +297,21 @@
       },
       {
         "step": "Step16",
-        "description": "Drag and Drop the \"Send Mail\" action into Trigger box",
-        "expected": "Send Mail action should be drag and dropped and SendMail popup should be opened",
+        "description": "Drag and Drop the \"Send EMail\" action into Trigger box",
+        "expected": "Send EMail action should be drag and dropped and SendMail popup should be opened",
         "remarks": "",
         "locator": ""
       },
       {
         "step": "Step17",
-        "description": "Give input as tmaniflow@gmail.com in \"To\" field",
+        "description": "Type as tmaniflow@gmail.com in \"To\" field",
         "expected": "Able to give input as mentioned",
         "remarks": "",
         "locator": ""
       },
       {
         "step": "Step18",
-        "description": "Give input as Automation in \"Subject\" field",
+        "description": "Type as Automation in \"Subject\" field",
         "expected": "Able to give input as mentioned",
         "remarks": "",
         "locator": ""
@@ -432,8 +432,8 @@
       },
       {
         "step": "Step7",
-        "description": "Click DateField and set 3Minutes later",
-        "expected": "Able to set 3minutes later",
+        "description": "Click DateField and set Datetime as 5 Minutes later",
+        "expected": "Able to Datetime as 5 Minutes later",
         "remarks": "",
         "locator": ""
       },
@@ -453,8 +453,8 @@
       },
       {
         "step": "Step10",
-        "description": "Click Built-ins Subtab",
-        "expected": "Built-ins subtab should be clicked",
+        "description": "Click \"Built-ins\" Subtab",
+        "expected": "\"Built-ins\" subtab should be clicked",
         "remarks": "",
         "locator": ""
       },
@@ -488,7 +488,7 @@
       },
       {
         "step": "Step15",
-        "description": "Drag and Drop the \"Decision\" box into SetVariable action",
+        "description": "Drag and Drop the \"Decision\" into Set Variable action inside canvas",
         "expected": "Decision box should be opened",
         "remarks": "",
         "locator": ""
@@ -544,21 +544,21 @@
       },
       {
         "step": "Step23",
-        "description": "Drag and Drop the \"Send Mail\" action into the \"Decision\" action Direct connection",
-        "expected": "Send Mail action should be drag and dropped and SendMail popup should be opened",
+        "description": "Drag and Drop the \"Send EMail\" action into the \"Decision\" action Direct connection",
+        "expected": "Send EMail action should be drag and dropped and SendMail popup should be opened",
         "remarks": "",
         "locator": ""
       },
       {
         "step": "Step24",
-        "description": "Give input as tmaniflow@gmail.com in \"To\" field",
+        "description": "Type as tmaniflow@gmail.com in \"To\" field",
         "expected": "Able to give input as mentioned",
         "remarks": "",
         "locator": ""
       },
       {
         "step": "Step25",
-        "description": "Give input as Automation in \"Subject\" field",
+        "description": "Type as Automation in \"Subject\" field",
         "expected": "Able to give input as mentioned",
         "remarks": "",
         "locator": ""
@@ -621,6 +621,204 @@
       },
       {
         "step": "Step34",
+        "description": "Click close window icon",
+        "expected": "We can able to click close window icon",
+        "remarks": "",
+        "locator": ""
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "name": "Delay_Container",
+    "description": "Validate the Delay container is working",
+    "url": "",
+    "auto_status": "",
+    "steps": [
+      {
+        "step": "Step1",
+        "description": "Click My Flows Tab",
+        "expected": "My Flows Tab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step2",
+        "description": "Click Create Flow button in MyFlows Tab",
+        "expected": "Create Flow button should be Clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step3",
+        "description": "Provide FlowName as \"Delayflow\" in Flow Name field",
+        "expected": "name should be typed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step4",
+        "description": "Click Create Button",
+        "expected": "Create button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step5",
+        "description": "Click Configure button in Schedule section",
+        "expected": "Configure button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step6",
+        "description": "Click Frequency field and set Once",
+        "expected": "Frequency field should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step7",
+        "description": "Click DateField and set 3Minutes later",
+        "expected": "Able to set 3minutes later",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step8",
+        "description": "Click Apply button",
+        "expected": "Apply button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step9",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step10",
+        "description": "Click \"Built-ins\" Subtab",
+        "expected": "\"Built-ins\" subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step11",
+        "description": "Click Logic Subtab",
+        "expected": "Logic subtab should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step12",
+        "description": "Drag \"Delay\" into Trigger box",
+        "expected": "Drag and drop should be worked and \"Delay\" window opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step13",
+        "description": "Give input as \"1 Minute\" in \"Delay For\"  inout field",
+        "expected": "We can able to give input in \"Delay For\" field",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step14",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step15",
+        "description": "Click Notification Section",
+        "expected": "Notification section should be expanded",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step16",
+        "description": "Drag and Drop the \"Send EMail\" action into Trigger box",
+        "expected": "Send EMail action should be drag and dropped and SendMail popup should be opened",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step17",
+        "description": "Type as tmaniflow@gmail.com in \"To\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step18",
+        "description": "Type as Automation in \"Subject\" field",
+        "expected": "Able to give input as mentioned",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step19",
+        "description": "Click Done button",
+        "expected": "Done button should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step20",
+        "description": "Swith ON the flow",
+        "expected": "flow should be SwitchedON",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step21",
+        "description": "Click History Subtab",
+        "expected": "History subtab should be clicked",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step22",
+        "description": "Wait until set the trigger scheduler Time",
+        "expected": "We can wait",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step23",
+        "description": "Click Refresh icon in history Tab",
+        "expected": "we can able to click refresh icon",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step24",
+        "description": "Click latest execution Record",
+        "expected": "We can able to click execution record",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step25",
+        "description": "Click Delay Input",
+        "expected": "Given input value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step26",
+        "description": "Click Delay output",
+        "expected": "Given output value should be displayed",
+        "remarks": "",
+        "locator": ""
+      },
+      {
+        "step": "Step27",
         "description": "Click close window icon",
         "expected": "We can able to click close window icon",
         "remarks": "",

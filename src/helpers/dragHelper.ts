@@ -38,23 +38,132 @@ export async function dragModule(
   moduleName: string,
   drop: { x: number; y: number } = { x: 715, y: 434 }
 ): Promise<void> {
-  const src = page.locator(`p.zf-module-label:text-is("${moduleName}")`);
-  await src.waitFor({ state: 'visible', timeout: 15_000 });
-  const box = await src.boundingBox();
-  if (!box) throw new Error(`dragModule: no bounding box for "${moduleName}"`);
+  // Use case-insensitive text matching — UI labels may differ in casing
+  // e.g. "Send Direct Message" vs "Send direct message"
+  const src = page.locator('p.zf-module-label').filter({ hasText: new RegExp(`^${moduleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+
+  // Wait for element to be in DOM first.
+  await src.first().waitFor({ state: 'attached', timeout: 20_000 });
+
+  // Scroll into view — sidebar list is overflow-clipped.
+  await src.first().scrollIntoViewIfNeeded({ timeout: 10_000 }).catch(() => {});
+  await page.waitForTimeout(300);
+
+  // NOTE: Playwright's `state: 'visible'` fails for overflow-clipped containers
+  // even after scrollIntoViewIfNeeded. Use boundingBox() to verify real dimensions.
+  let box = await src.first().boundingBox();
+  if (!box || box.width === 0) {
+    // One more attempt: evaluate-based scroll to bring element into viewport
+    await src.first().evaluate((el: Element) => el.scrollIntoView({ block: 'center', inline: 'nearest' })).catch(() => {});
+    await page.waitForTimeout(300);
+    box = await src.first().boundingBox();
+  }
+  if (!box || box.width === 0) throw new Error(`dragModule: no bounding box for "${moduleName}"`);
 
   const sx = box.x + box.width / 2;
   const sy = box.y + box.height / 2;
 
   await page.mouse.move(sx, sy);
   await page.mouse.down();
-  // Slow glide in two legs: first pick up, then land
-  await page.mouse.move(sx + 20, sy, { steps: 5 });
-  await page.mouse.move(drop.x, drop.y, { steps: 30 });
-  await page.waitForTimeout(400);   // brief hover for drop-zone highlight
+  // Initial pickup — jQuery UI activates 'ui-droppable-active' on all valid drop zones
+  await page.mouse.move(sx + 15, sy, { steps: 4 });
+  await page.waitForTimeout(500); // let jQuery UI mark canvas droppables active
+
+  // Dynamically detect the canvas drop zone using multiple strategies:
+  // 0. Explicit: prefer #zf-builder-canvas (the Zoho Flow inner canvas element)
+  // 1. CSS class: jQuery UI adds 'ui-droppable-active' during drag
+  // 2. jQuery registry: $.ui.ddmanager.droppables stores registered zones
+  // 3. Window-size-relative fallback if nothing found
+  // NOTE: div.flowServices.bfs-inactive is EXCLUDED — dropping on it navigates
+  //       away from the flow builder instead of opening the module config popup.
+  type DropTarget = { x: number; y: number; detected: boolean };
+  const target: DropTarget = await page.evaluate((fb: { x: number; y: number }) => {
+    const SIDEBAR_WIDTH = 270;
+    const iw = window.innerWidth;
+    const ih = window.innerHeight;
+
+    // Strategy 0: Prefer #zf-builder-canvas explicitly (always correct target)
+    const preferredCanvas = document.getElementById('zf-builder-canvas');
+    if (preferredCanvas) {
+      const r = preferredCanvas.getBoundingClientRect();
+      const ow = preferredCanvas.offsetWidth, oh = preferredCanvas.offsetHeight;
+      console.log(`[dragHelper] zf-builder-canvas: r.width=${r.width} r.height=${r.height} r.x=${r.x} r.right=${r.right} offsetW=${ow} offsetH=${oh}`);
+      // Use offsetWidth/offsetHeight as fallback for headless mode where getBoundingClientRect may differ
+      const w = r.width > 0 ? r.width : ow;
+      const h = r.height > 0 ? r.height : oh;
+      if (w > 100 && h > 100 && r.right > SIDEBAR_WIDTH) {
+        // If a hintTarget was recorded from a real session (within canvas bounds), use it —
+        // it was set by the Playwright recorder at the exact position where the drop worked.
+        if (fb && fb.x >= r.left && fb.x <= r.right && fb.y >= r.top && fb.y <= r.bottom) {
+          return { x: fb.x, y: fb.y, detected: true };
+        }
+        // Drop at center-left of canvas (avoid toolbar overlay at top)
+        const dropX = Math.round(Math.max(r.left + w * 0.5, SIDEBAR_WIDTH + 100));
+        const dropY = Math.round(r.top + h * 0.5);
+        return { x: dropX, y: dropY, detected: true };
+      }
+    } else {
+      console.log('[dragHelper] zf-builder-canvas NOT FOUND in DOM');
+    }
+
+    const zones: Array<{ x: number; y: number; area: number }> = [];
+
+    // Helper: skip bfs-inactive elements (div.flowServices) — they navigate away on drop
+    const skipEl = (el: HTMLElement) => el.classList.contains('bfs-inactive') || el.id === 'flowServices';
+
+    // Strategy 1: jQuery UI css class
+    document.querySelectorAll<HTMLElement>('.ui-droppable-active').forEach(el => {
+      if (skipEl(el)) return;
+      const r = el.getBoundingClientRect();
+      if (r.left > SIDEBAR_WIDTH && r.width > 60 && r.height > 30) {
+        zones.push({ x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), area: r.width * r.height });
+      }
+    });
+
+    // Strategy 2: jQuery UI ddmanager droppable registry
+    try {
+      const $ = (window as any).jQuery;
+      if ($ && $.ui && $.ui.ddmanager) {
+        const dd = $.ui.ddmanager.droppables['default'] || [];
+        for (const d of dd) {
+          const el = d.element && d.element[0];
+          if (!el || skipEl(el as HTMLElement)) continue;
+          const r = (el as HTMLElement).getBoundingClientRect();
+          if (r.left > SIDEBAR_WIDTH && r.width > 60 && r.height > 30) {
+            zones.push({ x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), area: r.width * r.height });
+          }
+        }
+      }
+    } catch (_) {/* ignore */}
+
+    if (!zones.length) {
+      // Strategy 3: window-size-relative fallback
+      // Canvas starts after sidebar (~270px). Drop in the horizontal center of canvas at 40% height.
+      const canvasX = Math.round(SIDEBAR_WIDTH + (iw - SIDEBAR_WIDTH) * 0.38);
+      const canvasY = Math.round(ih * 0.42);
+      console.log(`[dragHelper] window: ${iw}x${ih}, no droppable found, using (${canvasX},${canvasY})`);
+      return { x: canvasX, y: canvasY, detected: false };
+    }
+
+    zones.sort((a, b) => b.area - a.area);
+    return { x: zones[0].x, y: zones[0].y, detected: true };
+  }, drop) as DropTarget;
+
+  // Debug: log window size and element at target to help diagnose missed drops
+  const _dbg = await page.evaluate(({ tx, ty }: { tx: number; ty: number }) => {
+    const el = document.elementFromPoint(tx, ty);
+    return {
+      window: `${window.innerWidth}x${window.innerHeight}`,
+      elemAt: el ? `${el.tagName.toLowerCase()}.${(el.className||'').replace(/\s+/g,' ').trim().slice(0,60)}` : 'null',
+    };
+  }, { tx: target.x, ty: target.y });
+  console.log(`dragModule: "${moduleName}" window=${_dbg.window} target=(${target.x},${target.y}) elem=[${_dbg.elemAt}] dynamic:${target.detected}`);
+
+  await page.mouse.move(target.x, target.y, { steps: 25 });
+  await page.waitForTimeout(400);
   await page.mouse.up();
-  await page.waitForTimeout(600);   // let action panel open
-  console.log(`dragModule: "${moduleName}" → (${drop.x}, ${drop.y}) ✅`);
+  await page.waitForTimeout(600);
+  console.log(`dragModule: "${moduleName}" → (${target.x}, ${target.y}) ✅`);
 }
 
 // ── Class-based wrapper (used by the generator / older specs) ────────────────

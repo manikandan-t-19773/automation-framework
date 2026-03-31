@@ -14,6 +14,7 @@
 import { chromium, Page } from '@playwright/test';
 import * as fs   from 'fs';
 import * as path from 'path';
+import { debugDump, captureModal } from '../helpers/domCapture';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const FLOWS_URL    = 'https://flow.localzoho.com/#/workspace/default/flows';
@@ -57,17 +58,40 @@ async function settle(page: Page, ms = 400) {
 
 async function dragModule(page: Page, moduleName: string, drop = { x: 715, y: 434 }) {
   const src = page.locator(`p.zf-module-label:text-is("${moduleName}")`);
-  await src.waitFor({ state: 'visible', timeout: 15_000 });
-  const box = await src.boundingBox();
-  if (!box) throw new Error(`dragModule: no bbox for "${moduleName}"`);
+  await src.first().waitFor({ state: 'attached', timeout: 20_000 });
+  await src.first().scrollIntoViewIfNeeded({ timeout: 10_000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  let box = await src.first().boundingBox();
+  if (!box || box.width === 0) {
+    await src.first().evaluate((el: Element) => el.scrollIntoView({ block: 'center' })).catch(() => {});
+    await page.waitForTimeout(300);
+    box = await src.first().boundingBox();
+  }
+  if (!box || box.width === 0) throw new Error(`dragModule: no bbox for "${moduleName}"`);
   const sx = box.x + box.width / 2, sy = box.y + box.height / 2;
   await page.mouse.move(sx, sy);
   await page.mouse.down();
-  await page.mouse.move(sx + 20, sy, { steps: 5 });
-  await page.mouse.move(drop.x, drop.y, { steps: 30 });
-  await page.waitForTimeout(300);
+  await page.mouse.move(sx + 15, sy, { steps: 4 });
+  await page.waitForTimeout(500); // wait for jQuery UI ui-droppable-active
+  type _DT = { x: number; y: number; detected: boolean };
+  const _target: _DT = await (page.evaluate as Function)((fb: { x: number; y: number }) => {
+    const SIDEBAR_WIDTH = 270;
+    const zones: Array<{ x: number; y: number; area: number }> = [];
+    document.querySelectorAll('.ui-droppable-active').forEach(el => {
+      const r = (el as HTMLElement).getBoundingClientRect();
+      if (r.left > SIDEBAR_WIDTH && r.width > 60 && r.height > 30) {
+        zones.push({ x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), area: r.width * r.height });
+      }
+    });
+    if (!zones.length) return { x: fb.x, y: fb.y, detected: false };
+    zones.sort((a: { area: number }, b: { area: number }) => b.area - a.area);
+    return { x: zones[0].x, y: zones[0].y, detected: true };
+  }, drop);
+  await page.mouse.move(_target.x, _target.y, { steps: 25 });
+  await page.waitForTimeout(400);
   await page.mouse.up();
   await page.waitForTimeout(500);
+  console.log(`dragModule: "${moduleName}" → (${_target.x}, ${_target.y}) [dynamic:${_target.detected}] ✅`);
 }
 
 // ─── Action Interpreter ───────────────────────────────────────────────────────
@@ -154,26 +178,103 @@ async function interpretStep(
     code.push(`    const freqWrapper = page.locator('.customSelect_scheduleBy');`);
     code.push(`    await freqWrapper.waitFor({ state: 'visible', timeout: 15_000 });`);
     code.push(`    await freqWrapper.locator('input.customSelectInputfield').click();`);
-    code.push(`    await page.waitForTimeout(400);`);
-    code.push(`    await page.locator('.customSelect_scheduleBy li').filter({ hasText: /^Once$/i }).first().click();`);
+    code.push(`    await page.waitForTimeout(600);`);
+    code.push(`    // waitFor dropdown list item before clicking (renders async)`);
+    code.push(`    try {`);
+    code.push(`      const onceOpt = page.locator('.customSelect_scheduleBy li, .customSelect-ul li')`);
+    code.push(`        .filter({ hasText: /^Once$/i }).first();`);
+    code.push(`      await onceOpt.waitFor({ state: 'visible', timeout: 8_000 });`);
+    code.push(`      await onceOpt.click();`);
+    code.push(`    } catch {`);
+    code.push(`      await page.getByText('Once', { exact: true }).first().click();`);
+    code.push(`    }`);
     return code;
   }
 
   // ── Date field ───────────────────────────────────────────────────────────────
   if (desc.includes('date') && (desc.includes('3 minutes') || desc.includes('3minutes'))) {
-    const d = new Date(Date.now() + 3 * 60_000);
-    const p2 = (n: number) => String(n).padStart(2, '0');
-    const dateStr = `${p2(d.getMonth()+1)}/${p2(d.getDate())}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
-    const dateBox = page.getByRole('textbox', { name: /start date/i });
-    if (await dateBox.count() > 0) {
-      await dateBox.fill(dateStr);
-      code.push(`    {`);
-      code.push(`      const d = new Date(Date.now() + 3 * 60_000);`);
-      code.push(`      const p2 = (n: number) => String(n).padStart(2, '0');`);
-      code.push(`      const ds = \`\${p2(d.getMonth()+1)}/\${p2(d.getDate())}/\${d.getFullYear()} \${p2(d.getHours())}:\${p2(d.getMinutes())}\`;`);
-      code.push(`      await page.getByRole('textbox', { name: /start date/i }).fill(ds);`);
-      code.push(`    }`);
+    // Selector confirmed from live DOM: input#startDateTime (NOT name="start date")
+    // Clicking it opens Pikaday calendar + custom Zoho time spinner (.time-picker)
+    const startDtInput = page.locator('input#startDateTime, input[name="startDateTime"]').first();
+    await startDtInput.waitFor({ state: 'visible', timeout: 15_000 });
+    await startDtInput.click();
+    await page.waitForTimeout(800);  // wait for Pikaday + time picker to appear
+
+    // ── Click today's date in Pikaday calendar ───────────────────────────────
+    const todayDay = String(new Date().getDate());
+    // td.is-today contains the .pika-button for today
+    const todayBtn = page.locator('.pika-table td.is-today .pika-button, .pika-button.is-today')
+      .first();
+    const todayBtnFound = await todayBtn.count() > 0;
+    if (todayBtnFound) {
+      await todayBtn.click({ force: true });
+    } else {
+      // Fallback: find pika-day button matching today's number
+      await page.locator('.pika-button.pika-day').filter({ hasText: new RegExp(`^${todayDay}$`) }).first().click({ force: true });
     }
+    await page.waitForTimeout(500);
+
+    // ── Set time using the two spinner inputs inside .time-picker ────────────
+    // Structure: .time-picker input.ember-text-field  (1st=hours, 2nd=minutes)
+    // User hint: "set time by increasing minutes up arrow in time sections"
+    const target = new Date(Date.now() + 5 * 60_000);  // 5 min buffer
+    const targetHours   = target.getHours();    // 0-23
+    const targetMinutes = target.getMinutes();  // 0-59
+
+    const hoursInput   = page.locator('.time-picker input.ember-text-field').first();
+    const minutesInput = page.locator('.time-picker input.ember-text-field').last();
+
+    // Set hours: triple-click to select all, type new value
+    await hoursInput.click({ clickCount: 3 });
+    await hoursInput.type(String(targetHours), { delay: 50 });
+    await page.waitForTimeout(200);
+
+    // Set minutes: triple-click to select all, type new value
+    // Then press ArrowUp once to trigger Ember's change handler (as user described)
+    await minutesInput.click({ clickCount: 3 });
+    await minutesInput.type(String(targetMinutes), { delay: 50 });
+    await page.waitForTimeout(200);
+    // Press ArrowUp to confirm/trigger change event (Zoho time picker requires this)
+    await minutesInput.press('ArrowUp');
+    await page.waitForTimeout(100);
+    await minutesInput.press('ArrowDown');  // undo the +1 from ArrowUp
+    await page.waitForTimeout(200);
+    await minutesInput.press('Tab');  // commit value
+    await page.waitForTimeout(300);
+
+    // Emit the same logic into the generated spec
+    code.push(`    {`);
+    code.push(`      // Click startDateTime input to open Pikaday + time picker`);
+    code.push(`      const startDt = page.locator('input#startDateTime, input[name="startDateTime"]').first();`);
+    code.push(`      await startDt.waitFor({ state: 'visible', timeout: 15_000 });`);
+    code.push(`      await startDt.click();`);
+    code.push(`      await page.waitForTimeout(800);`);
+    code.push(`      // Click today in calendar`);
+    code.push(`      const todayBtn2 = page.locator('.pika-table td.is-today .pika-button, .pika-button.is-today').first();`);
+    code.push(`      if (await todayBtn2.count() > 0) {`);
+    code.push(`        await todayBtn2.click({ force: true });`);
+    code.push(`      } else {`);
+    code.push(`        const d2 = String(new Date().getDate());`);
+    code.push(`        await page.locator('.pika-button.pika-day').filter({ hasText: new RegExp('^'+d2+'$') }).first().click({ force: true });`);
+    code.push(`      }`);
+    code.push(`      await page.waitForTimeout(500);`);
+    code.push(`      // Set hours + minutes in time spinner`);
+    code.push(`      const tgt = new Date(Date.now() + 5 * 60_000);`);
+    code.push(`      const hrsInp = page.locator('.time-picker input.ember-text-field').first();`);
+    code.push(`      const minInp = page.locator('.time-picker input.ember-text-field').last();`);
+    code.push(`      await hrsInp.click({ clickCount: 3 });`);
+    code.push(`      await hrsInp.type(String(tgt.getHours()), { delay: 50 });`);
+    code.push(`      await page.waitForTimeout(200);`);
+    code.push(`      await minInp.click({ clickCount: 3 });`);
+    code.push(`      await minInp.type(String(tgt.getMinutes()), { delay: 50 });`);
+    code.push(`      await page.waitForTimeout(200);`);
+    code.push(`      await minInp.press('ArrowUp');   // trigger Ember change handler`);
+    code.push(`      await page.waitForTimeout(100);`);
+    code.push(`      await minInp.press('ArrowDown'); // restore`);
+    code.push(`      await page.waitForTimeout(200);`);
+    code.push(`      await minInp.press('Tab');`);
+    code.push(`      await page.waitForTimeout(300);`);
+    code.push(`    }`);
     return code;
   }
 
@@ -219,9 +320,14 @@ async function interpretStep(
       await page.getByText('Logic', { exact: true }).first().click();
     }
     await settle(page, 600);
-    code.push(`    const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });`);
-    code.push(`    await logicSection.first().waitFor({ state: 'visible', timeout: 10_000 });`);
-    code.push(`    await logicSection.first().click();`);
+    code.push(`    // Step11: Click Logic Subtab`);
+    code.push(`    try {`);
+    code.push(`      const logicSection = page.locator('[data-ember-action]').filter({ hasText: /^Logic$/i });`);
+    code.push(`      await logicSection.first().waitFor({ state: 'visible', timeout: 8_000 });`);
+    code.push(`      await logicSection.first().click();`);
+    code.push(`    } catch {`);
+    code.push(`      await page.getByText('Logic', { exact: true }).first().click();`);
+    code.push(`    }`);
     code.push(`    await page.waitForTimeout(600);`);
     return code;
   }
@@ -337,27 +443,122 @@ async function interpretStep(
         code.push(`    // Install/enable the module in Zoho Flow to activate this assertion`);
       } else {
         code.push(`    // Verify "${verifyText}" is present`);
-        code.push(`    await expect(`);
-        code.push(`      page.locator('p.zf-module-label, .zf-module-label, li, span, p')`);
-        code.push(`        .filter({ hasText: new RegExp(${JSON.stringify(verifyText.replace(/\s+/g,'\\\\s*'))}, 'i') }).first()`);
-        code.push(`        .or(page.getByText(${JSON.stringify(verifyText)}, { exact: true }).first())`);
-        code.push(`    ).toBeVisible({ timeout: 15_000 });`);
+        code.push(`    await expect(page.locator('p.zf-module-label').filter({ hasText: new RegExp(${JSON.stringify(spacedText.replace(/\s+/g,'\\\\s*'))}, 'i') }).first()).toBeVisible({ timeout: 15_000 });`);
       }
     }
     return code;
   }
 
+  // ── Decision condition: "Click 1st / 2nd Choose option" ─────────────────────
+  // Decision popup has two dropdown choosers: variable (1st) and operator (2nd).
+  if (desc.includes('choose') && (desc.includes('1st') || desc.includes('2nd') || desc.includes('option'))) {
+    const isSecond = desc.includes('2nd');
+    const idx = isSecond ? 1 : 0;
+    const choosers = page.locator(
+      '.workflowModal .customSelectInputfield, ' +
+      '.workflowModal .criteria-field input.customSelectInputfield, ' +
+      '.workflowModal .zf-split-container select'
+    );
+    try {
+      await choosers.nth(idx).waitFor({ state: 'visible', timeout: 10_000 });
+      await choosers.nth(idx).click();
+    } catch {
+      await page.locator('.workflowModal input, .workflowModal select').nth(idx).click().catch(() => {});
+    }
+    await settle(page, 500);
+    code.push(`    // Decision condition chooser (${isSecond ? '2nd' : '1st'})`);
+    code.push(`    await page.locator('.workflowModal .customSelectInputfield').nth(${idx}).click().catch(() => {});`);
+    code.push(`    await page.waitForTimeout(500);`);
+    return code;
+  }
+
+  // ── Select option from Decision dropdown (Set Variable / starts with / etc.) ──
+  if (desc.startsWith('select ') && (
+    desc.includes('set variable') || desc.includes('starts with') ||
+    desc.includes('ends with')   || desc.includes('contains')    ||
+    desc.includes('equals')
+  )) {
+    const optText = quoted(raw) || desc.replace(/^select\s+/, '').replace(/\s*option\s*$/i, '').trim();
+    try {
+      const opt = page.locator(
+        '.customSelect-ul li, .customSelect-dropdown li, ' +
+        '.zf-dropdown-options li, ul[class*="dropdown"] li, .workflowModal li'
+      ).filter({ hasText: new RegExp(optText.replace(/\s+/g, '\\s*'), 'i') }).first();
+      await opt.waitFor({ state: 'visible', timeout: 8_000 });
+      await opt.click();
+    } catch {
+      await page.getByText(new RegExp(optText, 'i')).first().click().catch(() => {});
+    }
+    await settle(page, 400);
+    code.push(`    // Select "${optText}" from open dropdown`);
+    code.push(`    await page.locator('.customSelect-ul li, .zf-dropdown-options li, .workflowModal li')`);
+    code.push(`      .filter({ hasText: /${optText}/i }).first().click().catch(() => {});`);
+    code.push(`    await page.waitForTimeout(400);`);
+    return code;
+  }
+
+  // ── Decision condition VALUE input ("Give as 'X' value in input field") ─────
+  // Different from Set Variable value (variableValue); this is the RHS condition field.
+  if (desc.includes('give as') && desc.includes('value') && desc.includes('input')) {
+    const val = quoted(raw) || 'test';
+    const condFld = page.locator(
+      '.workflowModal input[type="text"]:not([name="variableValue"])' +
+      ':not([name="outputVariableName"]):not([name="to"])' +
+      ':not([name="subject"]):not([name="displayName"])'
+    ).last();
+    try {
+      await condFld.waitFor({ state: 'visible', timeout: 10_000 });
+      await condFld.fill(val);
+    } catch {
+      await page.locator('.workflowModal input[type="text"]').last().fill(val).catch(() => {});
+    }
+    await settle(page, 300);
+    code.push(`    // Decision condition value field (RHS)`);
+    code.push(`    await page.locator('.workflowModal input[type=\\"text\\"]:not([name=\\"variableValue\\"])').last().fill(${JSON.stringify(val)});`);
+    code.push(`    await page.waitForTimeout(300);`);
+    return code;
+  }
+
   // ── Drag modules ──────────────────────────────────────────────────────────────
-  const dragTargets: Array<[string, string, { x: number; y: number }]> = [
-    ['set variable', 'Set Variable', { x: 715, y: 434 }],
-    ['decision',     'Decision',     { x: 715, y: 580 }],
-    ['send mail',    'Send Mail',    { x: 715, y: 720 }],
-    ['delay',        'Delay',        { x: 715, y: 580 }],
+  // ── Special: Drag Send Mail/Email into Decision DIRECT connection (TC3 Step23) ──
+  // Decision is at y≈580; its "Direct" output action slot is below at y≈750.
+  if (desc.includes('drag') && (desc.includes('send mail') || desc.includes('send email')) && desc.includes('decision')) {
+    const labels = ['Send Mail', 'Send Email'];
+    let usedLabel = labels[0];
+    for (const lbl of labels) {
+      if (await page.locator(`p.zf-module-label:text-is("${lbl}")`).count() > 0) { usedLabel = lbl; break; }
+    }
+    const drop = { x: 715, y: 750 };  // Decision "Direct" connection output slot
+    await dragModule(page, usedLabel, drop);
+    await settle(page, 3000);
+    code.push(`    // Drag "${usedLabel}" into Decision direct connection`);
+    code.push(`    await dragModule(page, ${JSON.stringify(usedLabel)}, { x: ${drop.x}, y: ${drop.y} });`);
+    code.push(`    await page.waitForTimeout(3000);`);
+    return code;
+  }
+
+  const dragTargets: Array<[string, string | string[], { x: number; y: number }]> = [
+    ['set variable', 'Set Variable',            { x: 715, y: 434 }],
+    ['decision',     'Decision',                { x: 715, y: 580 }],
+    ['send mail',    ['Send Mail', 'Send Email'],{ x: 715, y: 520 }],  // TC2: 2nd action slot ─ BELOW SetVariable (y=434)
+    ['send email',   ['Send Email', 'Send Mail'],{ x: 715, y: 520 }],  // alias – 'send email' wording without decision context
+    ['delay',        'Delay',                   { x: 715, y: 580 }],
   ];
-  for (const [keyword, label, drop] of dragTargets) {
+  for (const [keyword, labelOrAliases, drop] of dragTargets) {
     if (desc.includes('drag') && desc.includes(keyword)) {
-      await dragModule(page, label, drop);
-      code.push(`    await dragModule(page, ${JSON.stringify(label)}, { x: ${drop.x}, y: ${drop.y} });`);
+      const labels = Array.isArray(labelOrAliases) ? labelOrAliases : [labelOrAliases];
+      let usedLabel = labels[0];
+      for (const lbl of labels) {
+        const cnt = await page.locator(`p.zf-module-label:text-is("${lbl}")`).count();
+        if (cnt > 0) { usedLabel = lbl; break; }
+      }
+      await dragModule(page, usedLabel, drop);
+      await settle(page, 3000); // wait 3s for canvas popup to fully load after drop
+      // NOTE: captureModal removed here — page.evaluate() during DOM capture can trigger
+      // Zoho Flow's modal inactivity timer, closing the popup before the next step fills fields.
+      // DOM snapshots for drag popups are captured separately via `npm run capture:dom:*`.
+      code.push(`    await dragModule(page, ${JSON.stringify(usedLabel)}, { x: ${drop.x}, y: ${drop.y} });`);
+      code.push(`    await page.waitForTimeout(3000); // wait for canvas popup to fully load`);
       return code;
     }
   }
@@ -395,13 +596,178 @@ async function interpretStep(
     return code;
   }
 
-  // ── Enable / switch toggle ────────────────────────────────────────────────────
-  if (desc.includes('enable') && (desc.includes('flow') || desc.includes('toggle') || desc.includes('switch'))) {
-    const tog = page.locator('input[name="switch"]');
-    await tog.waitFor({ state: 'visible', timeout: 15_000 });
-    await tog.click();
+  // ── "To" email field (Send Mail/Send Email popup) ────────────────────────────
+  // DOM confirmed from live DOM + DevTools screenshot (634.54x35px):
+  //   <input type="text" autocomplete="off" name="to" class=" " data-ember-action ...>
+  //   Inside: div.zf-relative > div.zf-inputtext.ember-view > form > .popupContentScoll
+  // page.waitForSelector is used (NOT locator.waitFor) because Ember async rendering
+  // can delay the element's attachment in Playwright's locator retry loop.
+  if ((desc.includes('"to"') || (desc.includes(' to ') && desc.includes('field'))) && (desc.includes('give') || desc.includes('input') || desc.includes('tmaniflow'))) {
+    const emailM = raw.match(/[\w.+%-]+@[\w.-]+\.[A-Za-z]{2,}/);
+    const val = emailM ? emailM[0] : (quoted(raw) || 'test@example.com');
+    await page.waitForSelector('input[name="to"]', { state: 'attached', timeout: 30_000 });
+    await page.locator('input[name="to"]').first().evaluate((el: HTMLInputElement) => el.scrollIntoView({ block: 'center' }));
+    await page.locator('input[name="to"]').first().fill(val);
+    code.push(`    // Step: Fill Send Email 'To' field`);
+    code.push(`    // Confirmed: input[name="to"] (634x35px, visible in .popupContentScoll)`);
+    code.push(`    // page.waitForSelector used — reliable for Ember async renders.`);
+    code.push(`    await page.waitForSelector('input[name="to"]', { state: 'attached', timeout: 30_000 });`);
+    code.push(`    await page.locator('input[name="to"]').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));`);
+    code.push(`    await page.locator('input[name="to"]').first().fill(${JSON.stringify(val)});`);
+    return code;
+  }
+
+  // ── "Subject" field (Send Mail/Send Email popup) ────────────────────────────
+  // DOM confirmed from live DOM + DevTools screenshot:
+  //   <input type="text" autocomplete="off" name="subject" class=" " data-ember-action ...>
+  //   Also inside .popupContentScoll — same Ember async rendering consideration.
+  if (desc.includes('subject') && (desc.includes('give') || desc.includes('input') || desc.includes('automation'))) {
+    const subAsM = raw.match(/\bas\s+([\w\s@.-]+?)\s+in\s+['"].+?field/i);
+    const val = subAsM ? subAsM[1].trim() : (quoted(raw) || 'Automation');
+    await page.waitForSelector('input[name="subject"]', { state: 'attached', timeout: 30_000 });
+    await page.locator('input[name="subject"]').first().evaluate((el: HTMLInputElement) => el.scrollIntoView({ block: 'center' }));
+    await page.locator('input[name="subject"]').first().fill(val);
+    code.push(`    // Step: Fill Send Email 'Subject' field`);
+    code.push(`    // Confirmed: input[name="subject"] inside .popupContentScoll`);
+    code.push(`    await page.waitForSelector('input[name="subject"]', { state: 'attached', timeout: 30_000 });`);
+    code.push(`    await page.locator('input[name="subject"]').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));`);
+    code.push(`    await page.locator('input[name="subject"]').first().fill(${JSON.stringify(val)});`);
+    return code;
+  }
+
+  // ── Enable / switch toggle (handles typo "swith") ─────────────────────────────
+  // DOM confirmed from debug dump:
+  //   <label class="switch flRight">
+  //     <input name="switch" type="checkbox" class="switch-input" style="">  ← CSS-hidden
+  //     <span data-on="ON" data-off="OFF" class="switch-label"></span>
+  //   </label>
+  //   Must click the LABEL, not the hidden input.
+  //   Label may be outside the current viewport — scrollIntoViewIfNeeded required.
+  if ((desc.includes('enable') || desc.includes('switch') || desc.includes('swith') || desc.includes('turn on') || desc.includes('toggle')) &&
+      (desc.includes('flow') || desc.includes('on') || desc.includes('off'))) {
+    const switchLabel = page.locator('label.switch, label.switch-label, .switchContent label').first();
+    try {
+      await switchLabel.waitFor({ state: 'attached', timeout: 15_000 });
+      await switchLabel.scrollIntoViewIfNeeded();
+      await switchLabel.click();
+    } catch {
+      // Fallback: force-click the hidden checkbox directly
+      await page.locator('input[name="switch"].switch-input').first().click({ force: true });
+    }
+    await settle(page, 1000);
+    code.push(`    // Step: Switch ON the flow`);
+    code.push(`    // Confirmed: <label class="switch flRight"> wraps hidden <input name="switch" class="switch-input">`);
+    code.push(`    // scrollIntoViewIfNeeded required — toggle may be below the fold.`);
+    code.push(`    const switchLabel = page.locator('label.switch, .switchContent label').first();`);
+    code.push(`    await switchLabel.waitFor({ state: 'attached', timeout: 15_000 });`);
+    code.push(`    await switchLabel.scrollIntoViewIfNeeded();`);
+    code.push(`    await switchLabel.click();`);
+    code.push(`    await page.waitForTimeout(1000);`);
+    return code;
+  }
+
+  // ── History tab/subtab ────────────────────────────────────────────────────────
+  // DOM confirmed from debug dump (Step20 state):
+  //   <a href="#" class="ember-view">History</a>  — top nav tab alongside Summary / Builder
+  if (desc.includes('history') && !desc.includes('refresh') && (desc.includes('subtab') || desc.includes('tab') || desc.includes('click'))) {
+    // Target: the History anchor tab in the top nav (Summary | Builder | History)
+    const histTab = page.locator('a.ember-view').filter({ hasText: /^History$/ });
+    try {
+      await histTab.first().waitFor({ state: 'visible', timeout: 15_000 });
+      await histTab.first().click();
+    } catch {
+      await page.getByRole('link', { name: 'History', exact: true }).first().click();
+    }
+    await settle(page, 1000);
+    code.push(`    // Step: Click History tab`);
+    code.push(`    // Confirmed: <a class="ember-view">History</a> — top nav tab`);
+    code.push(`    const historyTab = page.locator('a.ember-view').filter({ hasText: /^History$/ });`);
+    code.push(`    await historyTab.first().waitFor({ state: 'visible', timeout: 15_000 });`);
+    code.push(`    await historyTab.first().click();`);
+    code.push(`    await page.waitForTimeout(1000);`);
+    return code;
+  }
+
+  // ── Wait / sleep step ─────────────────────────────────────────────────────────
+  if (desc.includes('wait') && (desc.includes('trigger') || desc.includes('scheduler') || desc.includes('time') || desc.includes('until'))) {
+    // Wait for the scheduled trigger time — 3 min flow + buffer
+    await settle(page, 3_000);
+    code.push(`    // Wait for scheduled execution — 3 min flow scheduler + buffer`);
+    code.push(`    // NOTE: adjust waitForTimeout if your flow takes longer to execute`);
+    code.push(`    await page.waitForTimeout(200_000); // ~3.5 min wait for scheduler`);
+    return code;
+  }
+
+  // ── Refresh icon in history ─────────────────────────────────────────────────
+  if (desc.includes('refresh') && desc.includes('history')) {
+    // Write spec code BEFORE attempting live click (flow may not run during recording)
+    code.push(`    // Refresh history list`);
+    code.push(`    const refreshBtn = page.locator('button[title*="refresh" i], button[aria-label*="refresh" i], .refresh-icon, .icon-refresh, [class*="refresh"]').first();`);
+    code.push(`    try {`);
+    code.push(`      await refreshBtn.waitFor({ state: 'visible', timeout: 10_000 });`);
+    code.push(`      await refreshBtn.click();`);
+    code.push(`    } catch {`);
+    code.push(`      await page.locator('button, a').filter({ hasText: /refresh/i }).first().click().catch(() => {});`);
+    code.push(`    }`);
+    code.push(`    await page.waitForTimeout(1000);`);
+    // Best-effort live click during recording (silently ignored if missing)
+    await page.locator('button[title*="refresh" i], button[aria-label*="refresh" i], .refresh-icon, .icon-refresh, [class*="refresh"]').first().click().catch(async () => {
+      await page.locator('button, a').filter({ hasText: /refresh/i }).first().click().catch(() => {});
+    });
+    await settle(page, 1000);
+    return code;
+  }
+
+  // ── Click latest execution record ──────────────────────────────────────────
+  if (desc.includes('latest') && desc.includes('execution')) {
+    // Write spec code BEFORE live action (execution row may not exist during recording)
+    code.push(`    // Click latest execution record`);
+    code.push(`    const execRow = page.locator('table tr, .execution-row, .history-item, tr.zf-table-row, li.history-li, .zf-history-row').first();`);
+    code.push(`    await execRow.waitFor({ state: 'visible', timeout: 20_000 });`);
+    code.push(`    await execRow.click();`);
+    code.push(`    await page.waitForTimeout(800);`);
+    // Best-effort live click during recording
+    await page.locator('table tr, .execution-row, .history-item, tr.zf-table-row, li.history-li, .zf-history-row').first().click().catch(async () => {
+      await page.locator('tr, .log-item').first().click().catch(() => {});
+    });
+    await settle(page, 800);
+    return code;
+  }
+
+  // ── Click Set Variable Input / Output in execution detail ─────────────────
+  if (desc.includes('setvariable') || (desc.includes('set') && desc.includes('variable') && (desc.includes('input') || desc.includes('output')))) {
+    const section = desc.includes('output') ? 'output' : 'input';
+    const secLoc = page.locator(`[class*="setvariable" i], .action-node`).filter({ hasText: new RegExp(section, 'i') }).first();
+    try {
+      await secLoc.waitFor({ state: 'visible', timeout: 10_000 });
+      await secLoc.click();
+    } catch {
+      await page.getByText(new RegExp(`set.?variable.*${section}`, 'i')).first().click().catch(() => {});
+    }
     await settle(page, 400);
-    code.push(`    await page.locator('input[name="switch"]').click();`);
+    code.push(`    // Click Set Variable ${section} section in execution detail`);
+    code.push(`    await page.locator('[class*="setvariable" i], .action-node').filter({ hasText: /${section}/i }).first().click().catch(() => {});`);
+    code.push(`    await page.waitForTimeout(400);`);
+    return code;
+  }
+
+  // ── Close window / dialog icon ─────────────────────────────────────────────
+  if ((desc.includes('close') || desc.includes('dismiss')) && (desc.includes('window') || desc.includes('icon') || desc.includes('dialog') || desc.includes('modal'))) {
+    try {
+      const closeBtn = page.locator('button[aria-label*="close" i], .close-btn, .modal-close, button.close, [data-dismiss], span.close-icon').first();
+      await closeBtn.waitFor({ state: 'visible', timeout: 8_000 });
+      await closeBtn.click();
+    } catch {
+      await page.keyboard.press('Escape');
+    }
+    await settle(page, 400);
+    code.push(`    // Close dialog/window`);
+    code.push(`    try {`);
+    code.push(`      await page.locator('button[aria-label*="close" i], .close-btn, .modal-close, button.close').first().click();`);
+    code.push(`    } catch {`);
+    code.push(`      await page.keyboard.press('Escape');`);
+    code.push(`    }`);
+    code.push(`    await page.waitForTimeout(400);`);
     return code;
   }
 
@@ -508,10 +874,11 @@ async function recordTC(
     channel: 'chrome',
     headless: false,
     slowMo: SLOW_MO,
+    args: ['--start-maximized'],
   });
   const context = await browser.newContext({
     storageState: AUTH_FILE,
-    viewport: { width: 1280, height: 900 },
+    viewport: null,          // null = respect --start-maximized window size
     ignoreHTTPSErrors: true,
   });
   const page = await context.newPage();
@@ -529,6 +896,8 @@ async function recordTC(
       const msg = String(err?.message || err).split('\n')[0].substring(0, 120);
       actions.push({ step: step.step, description: step.description, code: [`    // FAILED: ${msg}`], passed: false, error: msg });
       console.log(`❌  ${msg}`);
+      // Auto-capture DOM snapshot so we can inspect the exact page state on failure
+      try { await debugDump(page, step.step, step.description, err); } catch { /* ignore */ }
       // Continue — don't abort the whole TC
     }
   }

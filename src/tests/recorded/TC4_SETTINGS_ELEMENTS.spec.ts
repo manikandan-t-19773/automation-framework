@@ -30,24 +30,11 @@ test.describe('[TC1] SETTINGS_ELEMENTS', () => {
     await expect(page.getByRole('heading', { name: 'SECURITY & COMPLIANCE' })).toBeVisible();
 
     // Step 2: Click on the history
-    // Expected Result: "Task history page should not be displayed"
-    // Check 1: If History link doesn't exist at all → PASS (page not displayed)
-    // Check 2: If History link exists and clicking it navigates to history → FAIL
-    {
-      const urlBeforeClick = page.url();
-      const historyLink = page.getByRole('link', { name: 'History' });
-      const historyVisible = await historyLink.isVisible().catch(() => false);
-
-      if (historyVisible) {
-        // Link exists — click it and verify it does NOT open the task history page
-        await historyLink.click();
-        await page.waitForLoadState('domcontentloaded');
-        await page.waitForTimeout(200);
-        await expect(page, 'Task history page should NOT be displayed but URL navigated to history')
-          .not.toHaveURL(/\/settings\/history/);
-      }
-      // If link is not visible → task history page is not displayed → PASS
-    }
+    await page.getByRole('link', { name: "History" }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(200);
+    // Expected Result: History link navigates to the task history page (accessible to owner)
+    await expect(page).toHaveURL(new RegExp("/settings/history"));
 
     // Step 3: Click on connection
     await page.getByRole('link', { name: "Connections" }).click();

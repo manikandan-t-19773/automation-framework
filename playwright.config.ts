@@ -41,14 +41,13 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { 
-        ...devices['Desktop Chrome'],
         channel: 'chrome',
         storageState: 'playwright/.auth/user.json',
         ignoreHTTPSErrors: true,
-        // Override viewport: default Desktop Chrome is 1280×720.
-        // The Zoho Flow canvas drop zone renders at y≈742 which is 
-        // below the 720px fold — use 900px to keep it fully visible.
-        viewport: { width: 1280, height: 900 },
+        // Explicit viewport — headless Chrome ignores --start-maximized so we
+        // set 1440×900 to ensure the full schedule wizard (Pikaday + OK + Apply)
+        // is visible without scrolling.
+        viewport: { width: 1440, height: 900 },
         launchOptions: {
           args: ['--ignore-certificate-errors'],
         },

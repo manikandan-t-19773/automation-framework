@@ -112,8 +112,7 @@ test.describe('[TC2] CreateSchedulerFlow', () => {
     await appSearchBox.fill("Slack");
     await page.waitForTimeout(3000); // wait for Slack search results to fully load
 
-    // Step12: Drag and Drop the "Send Direct Message" action (requires Slack app connected in workspace)
-    // Dynamic drop zone detection handles varying canvas positions across window sizes.
+    // Step12: Drag and Drop the "Send Direct Message" action (requires Slack app connected)
     await dragModule(page, 'Send Direct Message');
 
     // Step13: give input as test in message field

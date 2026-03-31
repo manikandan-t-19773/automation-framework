@@ -85,59 +85,61 @@ test.describe('[TC3] CreateFlowSendMail', () => {
     await page.waitForTimeout(200);
 
     // Step7: Click DateField and set 3Minutes later
-    // Zoho Flow scheduler uses a textbox with aria-label "Start Date"
-    const dateBox = page.getByRole('textbox', { name: /start date/i });
-    await dateBox.waitFor({ state: 'visible', timeout: 30_000 });
-    // Build a date/time string 3 minutes in the future
-    const fut = new Date(Date.now() + 3 * 60 * 1000);
-    const p2  = (n: number) => String(n).padStart(2, '0');
-    // Zoho Flow date picker accepts "MM/DD/YYYY HH:MM" style input
-    const dateStr = `${p2(fut.getMonth()+1)}/${p2(fut.getDate())}/${fut.getFullYear()} ${p2(fut.getHours())}:${p2(fut.getMinutes())}`;
-    await dateBox.click();
-    await dateBox.fill(dateStr);
-    await page.keyboard.press('Tab'); // confirm the date picker
-    await page.waitForTimeout(200);
+    {
+      const d = new Date(Date.now() + 3 * 60_000);
+      const p2 = (n: number) => String(n).padStart(2, '0');
+      const ds = `${p2(d.getMonth()+1)}/${p2(d.getDate())}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+      await page.getByRole('textbox', { name: /start date/i }).fill(ds);
+    }
 
     // Step8: Click Apply button
-    await page.getByRole('button', { name: /apply/i }).click();
-    await page.waitForTimeout(200);
+    await page.getByRole('button', { name: /^apply$/i }).click();
 
     // Step9: Click Done button
-    await page.getByRole('button', { name: /done/i }).click();
-    await page.waitForTimeout(200);
+    await page.getByRole('button', { name: /^done$/i }).click();
+    await page.waitForTimeout(600);
 
     // Step10: Click Build-ins Subtab
-    // Open the sidebar app panel (same as clicking the search icon)
-    const builtinsSearch = page.getByRole('textbox', { name: /search apps/i });
-    await builtinsSearch.waitFor({ state: 'visible', timeout: 30_000 });
-    await builtinsSearch.click();
-    await page.waitForTimeout(200);
-    // Switch to the Built-ins tab
-    await page.getByRole('tab', { name: /built.?ins/i })
-      .or(page.getByText('Built-ins', { exact: true })).first().click();
-    await page.waitForTimeout(200);
+    // data-ember-action filter is the confirmed working pattern (from LC2/LC3 recordings)
+    const builtinsBtn = page.locator('[data-ember-action]').filter({ hasText: /^Built-ins$/i });
+    await builtinsBtn.first().waitFor({ state: 'visible', timeout: 20_000 });
+    await builtinsBtn.first().click();
+    await page.waitForTimeout(1200);
 
-    // Step11: Click Notification Section
-    // Expand the Notification accordion in the Built-ins sidebar
-    await page.getByText('Notification', { exact: true }).first().click();
-    await page.waitForTimeout(200);
+    // Step11: Click Notification Section (try/catch for selector resilience across sidebar states)
+    try {
+      const notifBtn2 = page.locator('[data-ember-action]').filter({ hasText: /^Notification$/i });
+      await notifBtn2.first().waitFor({ state: 'visible', timeout: 8_000 });
+      await notifBtn2.first().click();
+    } catch {
+      await page.getByText('Notification', { exact: true }).first().click();
+    }
+    await page.waitForTimeout(600);
 
-    // Step12: Drag and Drop the "Send Mail" action into Trigger box
-    // dragModule: proven selector p.zf-module-label:text-is("Send Mail")
-    await dragModule(page, 'Send Mail', { x: 715, y: 434 });
+    // Step12: Drag and Drop the "Send Email" action into the canvas
+    // Confirmed label: 'Send Email' (NOT 'Send Mail') from builtins-notification-panel DOM
+    await dragModule(page, 'Send Email');
+    await page.waitForTimeout(3000); // wait for Send Email popup to open
 
     // Step13: Give input as tmaniflow@gmail.com in "To" field
-    // Fill "to" via getByRole — pierces shadow DOM in Zoho Flow editor
-    const toField = page.getByRole('textbox', { name: /^to\b/i });
-    await toField.waitFor({ state: 'visible', timeout: 60_000 });
-    await toField.fill("tmaniflow@gmail.com");
+    // Confirmed selector: input[name="to"] (Ember async — waitForSelector + scrollIntoView)
+    await page.waitForSelector('input[name="to"]', { state: 'attached', timeout: 20_000 });
+    await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>('input[name="to"]');
+      if (el) el.scrollIntoView({ block: 'center' });
+    });
     await page.waitForTimeout(300);
+    await page.locator('input[name="to"]').fill('tmaniflow@gmail.com');
+    await page.waitForTimeout(200);
 
     // Step14: Give input as Automation in "Subject" field
-    // Fill "subject" via getByRole — pierces shadow DOM in Zoho Flow editor
-    const subjectField = page.getByRole('textbox', { name: /^subject\b/i });
-    await subjectField.waitFor({ state: 'visible', timeout: 60_000 });
-    await subjectField.fill("Automation");
+    await page.waitForSelector('input[name="subject"]', { state: 'attached', timeout: 20_000 });
+    await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>('input[name="subject"]');
+      if (el) el.scrollIntoView({ block: 'center' });
+    });
+    await page.waitForTimeout(300);
+    await page.locator('input[name="subject"]').fill('Automation');
     await page.waitForTimeout(300);
 
     // Step15: Click Done button
